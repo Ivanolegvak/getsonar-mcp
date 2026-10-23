@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "getsonar-mcp"
+version = "0.2.0"
+description = "MCP server for SONAR: KYB due diligence on vendors, partners and resellers (registries, sanctions, PEP, ICIJ Offshore Leaks, adverse media) for AI agents."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "SONAR", email = "ivan@getsonar.report" },
+]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "anthropic",
+    "mcp-server",
+    "kyb",
+    "know-your-business",
+    "due-diligence",
+    "vendor-due-diligence",
+    "third-party-risk",
+    "sanctions-screening",
+    "pep",
+    "ubo",
+    "company-registry",
+    "offshore-leaks",
+    "adverse-media",
+    "osint",
+    "compliance",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Office/Business",
+    "Topic :: Software Development :: Libraries",
+]
+
+dependencies = [
+    # instructions= / host= / port= on FastMCP need a 1.x release well past
+    # 1.0; 1.27.2 is what uv.lock pins and the smoke test runs against.
+    # <2: mcp 2.x renamed FastMCP to MCPServer, so `uvx getsonar-mcp` with
+    # an unpinned mcp crashes at import (0.1.9 on PyPI does, Oct 2026).
+    "mcp>=1.10.0,<2",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+http = [
+    "uvicorn>=0.30.0",
+]
+
+[project.urls]
+Homepage = "https://getsonar.report/integrations"
+Documentation = "https://getsonar.report/developers"
+Repository = "https://github.com/Ivanolegvak/getsonar-mcp"
+"API Reference" = "https://api.getsonar.report/docs"
+"Get an API key" = "https://getsonar.report/developer/keys"
+
+[project.scripts]
+getsonar-mcp = "getsonar_mcp.__main__:main"
+getsonar-mcp-http = "getsonar_mcp.http_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/getsonar_mcp"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]

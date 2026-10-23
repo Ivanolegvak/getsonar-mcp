@@ -1,0 +1,16 @@
+# Files left out of the MCPB bundle (mcpb pack). The bundle only carries
+# the manifest and the package source; uvx installs getsonar-mcp itself.
+.venv/
+.pytest_cache/
+**/__pycache__/
+tests/
+dist/
+build/
+Dockerfile
+oauth.py
+server.py
+requirements.txt
+uv.lock
+.env
+.env.example
+scripts/

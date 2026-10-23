@@ -1,0 +1,30 @@
+# Smithery / Glama configuration (classic stdio format).
+# Smithery's current flow publishes local stdio servers as an MCPB bundle
+# built from manifest.json (see DIRECTORIES.md); this file stays for the
+# directories that still read the classic format to start the server and
+# list its tools.
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - sonarApiKey
+    properties:
+      sonarApiKey:
+        type: string
+        description: "SONAR API key (sk-sonar-...) from https://getsonar.report/developer/keys. New accounts get 3 free trial API calls."
+      sonarApiBase:
+        type: string
+        default: "https://api.getsonar.report"
+        description: "API base URL. Only change it for a staging or self-hosted SONAR."
+  commandFunction: |-
+    (config) => ({
+      command: 'uvx',
+      args: ['getsonar-mcp'],
+      env: {
+        SONAR_API_KEY: config.sonarApiKey,
+        SONAR_API_BASE: config.sonarApiBase || 'https://api.getsonar.report'
+      }
+    })
+  exampleConfig:
+    sonarApiKey: sk-sonar-YOUR_KEY_HERE

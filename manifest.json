@@ -1,0 +1,62 @@
+{
+  "manifest_version": "0.3",
+  "name": "getsonar-mcp",
+  "display_name": "SONAR: KYB due diligence",
+  "version": "0.2.0",
+  "description": "KYB checks on any company: registries, sanctions, PEP, ICIJ Offshore Leaks, adverse media.",
+  "long_description": "SONAR runs KYB (Know Your Business) due diligence on vendors, partners and resellers from public records: 13 national business registries, sanctions and PEP lists, ICIJ Offshore Leaks and 10 years of adverse media, with a source link for every finding. A due-diligence aid, not a regulated AML/KYC provider. Pay per call: /findings EUR 0.40, /run EUR 2.00; every new account gets 3 free trial API calls. Requires uv (uvx) on the PATH.",
+  "author": {
+    "name": "SONAR",
+    "email": "ivan@getsonar.report",
+    "url": "https://getsonar.report"
+  },
+  "homepage": "https://getsonar.report/integrations",
+  "documentation": "https://getsonar.report/developers",
+  "support": "https://getsonar.report/developers",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ivanolegvak/getsonar-mcp.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "kyb",
+    "due-diligence",
+    "sanctions-screening",
+    "pep",
+    "company-registry",
+    "offshore-leaks",
+    "adverse-media",
+    "third-party-risk"
+  ],
+  "server": {
+    "type": "python",
+    "entry_point": "src/getsonar_mcp/__main__.py",
+    "mcp_config": {
+      "command": "uvx",
+      "args": ["getsonar-mcp@0.2.0"],
+      "env": {
+        "SONAR_API_KEY": "${user_config.sonar_api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "sonar_api_key": {
+      "type": "string",
+      "title": "SONAR API key",
+      "description": "Your sk-sonar-... key from https://getsonar.report/developer/keys",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "tools": [
+    { "name": "kyb_findings", "description": "Fast KYB check: structured findings with sources (EUR 0.40)" },
+    { "name": "kyb_run_submit", "description": "Submit a full KYB report, returns a run_id (EUR 2.00)" },
+    { "name": "adverse_media", "description": "Negative news, complaints and reviews (EUR 0.40)" },
+    { "name": "check_report_status", "description": "Poll an async report (free)" },
+    { "name": "account_balance", "description": "Balance and free trial calls remaining (free)" }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": { "python": ">=3.10" }
+  }
+}

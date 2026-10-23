@@ -1,0 +1,54 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Ivanolegvak/sonar-mcp",
+  "title": "SONAR: KYB due diligence",
+  "description": "KYB checks on any company: registries, sanctions, PEP, ICIJ Offshore Leaks, adverse media.",
+  "websiteUrl": "https://getsonar.report/integrations",
+  "repository": {
+    "url": "https://github.com/Ivanolegvak/getsonar-mcp",
+    "source": "github"
+  },
+  "icons": [
+    {
+      "src": "https://getsonar.report/favicon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": ["any"]
+    }
+  ],
+  "version": "0.2.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "getsonar-mcp",
+      "version": "0.2.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "uvx",
+      "environmentVariables": [
+        {
+          "name": "SONAR_API_KEY",
+          "description": "Your SONAR API key (sk-sonar-...). Create one at https://getsonar.report/developer/keys. New accounts get 3 free trial API calls.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "SONAR_API_BASE",
+          "description": "API base URL. Only change it for a staging or self-hosted SONAR.",
+          "isRequired": false,
+          "format": "string",
+          "default": "https://api.getsonar.report"
+        },
+        {
+          "name": "SONAR_API_TIMEOUT",
+          "description": "Per-request timeout in seconds.",
+          "isRequired": false,
+          "format": "number",
+          "default": "120"
+        }
+      ]
+    }
+  ]
+}
