@@ -43,12 +43,13 @@ def test_pricing_and_scope_copy() -> None:
     for fname, text in PUBLIC_TEXTS.items():
         low = text.lower()
         assert "lifetime" not in low, fname
+        assert not re.search(r"\b(3|three) free", low), fname
         assert "competitive" not in low, fname
         assert "strategic account" not in low, fname
         assert not re.search(r"\$\d", text), f"{fname}: prices are in euro"
         assert "zefix" not in low, fname
     assert "€0.40" in README and "€2.00" in README
-    assert "3 free trial API calls" in README
+    assert "first API call is free" in README
 
 
 def test_server_json_limits() -> None:

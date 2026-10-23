@@ -12,7 +12,7 @@ startCommand:
     properties:
       sonarApiKey:
         type: string
-        description: "SONAR API key (sk-sonar-...) from https://getsonar.report/developer/keys. New accounts get 3 free trial API calls."
+        description: "SONAR API key (sk-sonar-...) from https://getsonar.report/developer/keys. Your first API call is free."
       sonarApiBase:
         type: string
         default: "https://api.getsonar.report"

@@ -48,7 +48,7 @@ SERVER_INSTRUCTIONS = (
     "Use kyb_findings for fast structured data, kyb_run_submit + "
     "check_report_status for the full written report, account_balance "
     "before a batch of calls. Paid calls: /findings EUR 0.40, /run EUR 2.00; "
-    "every new account gets 3 free trial API calls."
+    "your first API call is free."
 )
 
 TOOL_NAMES = (
@@ -98,7 +98,7 @@ def register_tools(mcp: Any) -> None:
         (legal name, number, status, address, officers), sanctions and PEP
         matches, ICIJ Offshore Leaks hits, regulatory registers (e.g. FCA
         for UK firms) and adverse media. Synchronous, 30-90s, no AI-written
-        summary. EUR 0.40 per call after the 3 free trial API calls.
+        summary. EUR 0.40 per call after your free first call.
 
         Args:
             company_name: Legal name of the company (e.g. "Tesco PLC")
@@ -131,7 +131,7 @@ def register_tools(mcp: Any) -> None:
         1-3 minutes. The report has everything kyb_findings returns plus a
         PASS / REVIEW / FLAG verdict per check, risk flags, a written
         summary and recommended next steps for a human reviewer.
-        EUR 2.00 per call after the 3 free trial API calls.
+        EUR 2.00 per call after your free first call.
 
         Args:
             company_name: Legal name of the company
@@ -164,7 +164,7 @@ def register_tools(mcp: Any) -> None:
         Checks news sources (Google News + adverse-media search, 10-year
         lookback), BBB, Clutch.co, Yelp, App Store, Facebook and Reddit.
         No sanctions/PEP screening: use kyb_findings for that.
-        EUR 0.40 per call after the 3 free trial API calls.
+        EUR 0.40 per call after your free first call.
 
         Args:
             company_name: Company to screen
@@ -230,9 +230,9 @@ def register_tools(mcp: Any) -> None:
         """Check API usage, free trial calls remaining and pre-paid balance.
 
         Useful for AI agents to decide whether the next call will be free,
-        paid, or fail with insufficient balance. Every new account gets 3
-        free trial API calls (any endpoint, granted once at signup, not
-        monthly). After that, /findings calls deduct EUR 0.40 and /run calls
+        paid, or fail with insufficient balance. A new account's first API
+        call is free (any endpoint, granted once at signup, not monthly).
+        After that, /findings calls deduct EUR 0.40 and /run calls
         deduct EUR 2.00 from the balance. Free (no charge).
         """
         api_key = get_api_key_from_env()

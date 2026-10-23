@@ -204,7 +204,7 @@ transport.
 - **Pricing model:** the source of truth for `/run` and `/findings`
   costs is the SONAR pricing page (`/pricing` on getsonar.report).
   Both this doc and `tools.py` reflect that model — €2 / `/run`,
-  €0.40 / `/findings`, three free trial API calls granted once at signup.
+  €0.40 / `/findings`, and a new account's first API call is free.
 - **SONAR backend internals:** see `docs/SONAR_TECHNICAL_OVERVIEW.md` (path
   from the repo root). The MCP server is a thin client over the public
   SONAR API; the heavy lifting (OSINT collection, Haiku→Sonnet

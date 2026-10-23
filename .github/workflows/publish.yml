@@ -1,0 +1,43 @@
+# Publishes getsonar-mcp to PyPI (Trusted Publishing, no token) and then
+# to the official MCP Registry (GitHub OIDC login, no token).
+# Runs on a published GitHub release or manually (workflow_dispatch).
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      - run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/
+
+  registry:
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait until the version is visible on PyPI
+        run: |
+          VERSION=$(python3 -c "import json;print(json.load(open('server.json'))['version'])")
+          for i in $(seq 1 30); do
+            curl -sf "https://pypi.org/pypi/getsonar-mcp/$VERSION/json" >/dev/null && exit 0
+            sleep 10
+          done
+          echo "getsonar-mcp $VERSION not on PyPI yet" >&2; exit 1
+      - name: Install mcp-publisher
+        run: curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+      - run: ./mcp-publisher login github-oidc
+      - run: ./mcp-publisher publish

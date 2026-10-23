@@ -33,7 +33,7 @@ The API is pay per call:
 | `/run` (`kyb_run_submit`) | €2.00 |
 | `check_report_status`, `account_balance` | free |
 
-Every new account gets **3 free trial API calls** (any endpoint, granted once at signup). After that, calls are paid from a prepaid balance: top up from €5 at [getsonar.report/developer/keys](https://getsonar.report/developer/keys). Plans and the web app's free tier are on [getsonar.report/pricing](https://getsonar.report/pricing).
+**Your first API call is free** (any endpoint). After that, calls are paid from a prepaid balance: top up from €5 at [getsonar.report/developer/keys](https://getsonar.report/developer/keys). Plans and the web app's free tier are on [getsonar.report/pricing](https://getsonar.report/pricing).
 
 ## Get an API key
 
@@ -191,8 +191,8 @@ Input: none. Output:
 
 ```markdown
 # Account usage — 2026-10
-- Calls this month: **1**
-- Free trial calls remaining: **2** (granted once at signup)
+- Calls this month: **0**
+- Free trial calls remaining: **1** (granted once at signup)
 - Pre-paid balance: **€5.00**
 ```
 
@@ -254,7 +254,7 @@ Agents: `kyb-diligence` (registries, sanctions, PEP, UBOs, adverse media) and `a
 
 **`401 Unauthorized`**: `SONAR_API_KEY` is missing or wrong. Check it at [getsonar.report/developer/keys](https://getsonar.report/developer/keys).
 
-**`402 Payment Required`**: your 3 free trial calls are used and your balance is €0. Top up from €5 at [getsonar.report/developer/keys](https://getsonar.report/developer/keys).
+**`402 Payment Required`**: your free first call is used and your balance is €0. Top up from €5 at [getsonar.report/developer/keys](https://getsonar.report/developer/keys).
 
 **Timeouts**: raise `SONAR_API_TIMEOUT`. A full report can take 3+ minutes; poll with `check_report_status` rather than waiting on one call.
 

@@ -57,7 +57,7 @@ FINDINGS = {
 USAGE = {
     "period": "2026-10",
     "total_requests": 1,
-    "free_trial_remaining": 2,
+    "free_trial_remaining": 1,
     "balance_cents": 500,
     "by_endpoint": {"findings": 1},
 }
@@ -171,7 +171,7 @@ def test_stdio_lists_tools_and_calls_fake_api(fake_api: str) -> None:
                     assert "**Checked, clean**" in out
 
                     bal = _text(await session.call_tool("account_balance", {}))
-                    assert "Free trial calls remaining: **2**" in bal
+                    assert "Free trial calls remaining: **1**" in bal
                     assert "€5.00" in bal
 
     anyio.run(run)

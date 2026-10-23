@@ -29,7 +29,7 @@
       "environmentVariables": [
         {
           "name": "SONAR_API_KEY",
-          "description": "Your SONAR API key (sk-sonar-...). Create one at https://getsonar.report/developer/keys. New accounts get 3 free trial API calls.",
+          "description": "Your SONAR API key (sk-sonar-...). Create one at https://getsonar.report/developer/keys. Your first API call is free.",
           "isRequired": true,
           "isSecret": true,
           "format": "string"

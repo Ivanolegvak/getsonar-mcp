@@ -84,7 +84,7 @@ Needs step 4 (the list asks for a Glama listing). The fork `Ivanolegvak/awesome-
 sync it first. Add under **Finance & Fintech**, alphabetical:
 
 ```markdown
-- [Ivanolegvak/getsonar-mcp](https://github.com/Ivanolegvak/getsonar-mcp) 🐍 ☁️ - KYB due diligence on vendors, partners and resellers: 13 national business registries, sanctions and PEP screening, ICIJ Offshore Leaks and 10-year adverse media, with a source link for every finding. Pay per call, 3 free trial calls.
+- [Ivanolegvak/getsonar-mcp](https://github.com/Ivanolegvak/getsonar-mcp) 🐍 ☁️ - KYB due diligence on vendors, partners and resellers: 13 national business registries, sanctions and PEP screening, ICIJ Offshore Leaks and 10-year adverse media, with a source link for every finding. Pay per call, first call free.
 ```
 
 PR title: `Add getsonar-mcp (KYB due diligence)`. This replaces the copy in
@@ -127,6 +127,7 @@ Same name, URL and description as step 7; category *Finance* (or *Business*). Re
 - KYB due diligence for vendors, partners and resellers. Never "AML provider", "KYC provider" or
   "compliance decision"; SONAR is a due-diligence aid.
 - No competitive intelligence or strategic accounts (frozen products).
-- API pricing: €0.40 per `/findings`, €2.00 per `/run`, 3 free trial API calls. Don't call it
-  "lifetime" and don't mix it up with the web app's free plan (2 reports a month).
+- API pricing: €0.40 per `/findings`, €2.00 per `/run`, your first API call is free (one
+  call since 2026-10-24). Say "your first call is free", not a multi-call or never-expiring
+  allowance, and don't mix it up with the web app's free plan (2 reports a month).
 - 13 national business registries (no Switzerland/Zefix).
