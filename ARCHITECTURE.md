@@ -21,7 +21,7 @@ mcp-server/
 ├── manifest.json          ─ MCPB bundle manifest (Smithery, Claude Desktop one-click)
 ├── smithery.yaml          ─ classic Smithery stdio config
 ├── glama.json             ─ Glama maintainer claim
-├── tests/                 ─ stdio smoke test against a fake API (uv run pytest)
+├── tests/                 ─ stdio smoke test against a fake API + formatter tests (uv run pytest)
 ├── scripts/               ─ snapshot-public-mirror.sh (public source mirror)
 ├── server.py              ─ legacy entry point (Render Dockerfile target)
 ├── oauth.py               ─ OAuth 2.0 server (Anthropic MCP directory)
@@ -33,7 +33,7 @@ mcp-server/
         ├── __init__.py        ─ package version + public surface
         ├── __main__.py        ─ stdio transport entry (uvx getsonar-mcp)
         ├── http_server.py     ─ Streamable-HTTP transport entry
-        ├── tools.py           ─ MCP tool registrations (the 5 tools)
+        ├── tools.py           ─ MCP tool registrations (the 7 tools)
         └── client.py          ─ HTTP client + response formatters
 ```
 
@@ -85,13 +85,25 @@ arguments); `main()` calls `run(transport="streamable-http")`. Reads
 `MCP_HOST` / `PORT` env vars.
 
 ### `src/getsonar_mcp/tools.py`
-Where the 5 MCP tools are defined and registered (0.2.0):
+Where the 7 MCP tools are defined and registered (0.3.0):
 
-1. `kyb_findings` — sync, ~30-90s. Structured KYB signals.
-2. `kyb_run_submit` — async, returns `run_id`. Full Claude-narrated KYB report.
-3. `adverse_media` — sync. Negative news + complaints + bad reviews.
-4. `check_report_status` — poll `run_id` until status="completed".
-5. `account_balance` — current balance and free-trial calls remaining.
+| Tool | Endpoint | Price |
+|---|---|---|
+| `company_lookup` | `POST /v1/companies/lookup` (`country`, `company_name` / `registration_number`, `state`, `include`) | €0.01 when found (100 free per account) |
+| `company_officers` | `GET /v1/companies/{country}/{number}/officers` | €0.01 when found |
+| `kyb_findings` | `POST /v1/agents/kyb-diligence/findings?wait=` then `GET /v1/agents/findings/{job_id}` on 202 | €0.50 |
+| `kyb_run_submit` | `POST /v1/agents/kyb-diligence/run` (async, returns `run_id`) | €6.00 |
+| `adverse_media` | `POST /v1/agents/adverse-media/findings` (same 202 polling) | €0.50 |
+| `check_report_status` | `GET /v1/agents/{agent}/run/{run_id}` | free |
+| `account_balance` | `GET /v1/usage` | free |
+
+`kyb_findings` and `kyb_run_submit` send the KYB identifiers (`country`,
+`state`, `registration_number`, `vat_number`) only when given; without
+`country` the API searches no register (`registry_match.status`
+NOT_SEARCHED). The lookup tools render a short headline and then the API's
+full JSON, so new response fields reach the model without a release.
+`DELETE /v1/companies/lookup(s)` is deliberately not a tool (destructive,
+account admin, not an agent task).
 
 The competitive-intelligence tools were removed in 0.2.0 (CI frozen; see
 `SONAR_DECISIONS/ci_sa_freeze.md` in the main repo).
@@ -102,15 +114,17 @@ The competitive-intelligence tools were removed in 0.2.0 (CI frozen; see
 frontend /developers page are checked against).
 
 ### `src/getsonar_mcp/client.py`
-HTTP layer + response formatters. Six functions:
+HTTP layer + response formatters. Main functions:
 
 | Function | Purpose |
 |---|---|
 | `get_api_base()` | Reads `SONAR_API_BASE` env var, defaults to `https://api.getsonar.report`. |
 | `get_default_timeout()` | Reads `SONAR_API_TIMEOUT`, defaults to 120s. |
 | `get_api_key_from_env()` | Reads `SONAR_API_KEY`, raises if missing. |
-| `call_sonar(method, path, ...)` | The single HTTP entry — every tool routes through here. Async. |
-| `format_findings(result, title)` | Markdown response shape for `*_findings` tools. |
+| `call_sonar(method, path, ...)` | The single HTTP entry: every tool routes through here. Async. Errors come back as `{"error": True, "status", "message"}` with the API's code and reason in the message. |
+| `call_findings(path, api_key, body)` | POST /findings with `?wait=`, then polls the 202 `poll_url` (5 min budget). |
+| `format_findings(result, title)` | Markdown for `*_findings`: `registry_match`, field statuses, `ubo_graph`, findings with `sources[].provider` (the kind of source). |
+| `format_lookup(result)` / `format_officers(result)` | Headline (status, good standing, `truncated`, `coverage_note`, price) plus the full JSON. |
 | `format_run_started(result, agent_type)` | Markdown response when a run is submitted. |
 | `format_run_status(result)` | Markdown response when polling completes. |
 
@@ -203,8 +217,9 @@ transport.
 - **User-facing setup:** [README.md](./README.md)
 - **Pricing model:** the source of truth for `/run` and `/findings`
   costs is the SONAR pricing page (`/pricing` on getsonar.report).
-  Both this doc and `tools.py` reflect that model — €2 / `/run`,
-  €0.40 / `/findings`, and a new account's first API call is free.
+  Both this doc and `tools.py` reflect that model: €6.00 / `/run`,
+  €0.50 / `/findings`, €0.01 per company found by a lookup (100 free per
+  account), and a new account's first findings or report call is free.
 - **SONAR backend internals:** see `docs/SONAR_TECHNICAL_OVERVIEW.md` (path
   from the repo root). The MCP server is a thin client over the public
   SONAR API; the heavy lifting (OSINT collection, Haiku→Sonnet

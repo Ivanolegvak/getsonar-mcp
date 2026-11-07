@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "getsonar-mcp",
   "display_name": "SONAR: KYB due diligence",
-  "version": "0.2.0",
-  "description": "KYB checks on any company: registries, sanctions, PEP, ICIJ Offshore Leaks, adverse media.",
-  "long_description": "SONAR runs KYB (Know Your Business) due diligence on vendors, partners and resellers from public records: 13 national business registries, sanctions and PEP lists, ICIJ Offshore Leaks and 10 years of adverse media, with a source link for every finding. A due-diligence aid, not a regulated AML/KYC provider. Pay per call: /findings EUR 0.40, /run EUR 2.00; your first API call is free. Requires uv (uvx) on the PATH.",
+  "version": "0.3.0",
+  "description": "Company register lookups and KYB checks: registries, sanctions, PEP, offshore leaks, adverse media.",
+  "long_description": "SONAR runs KYB (Know Your Business) due diligence on vendors, partners and resellers from public records: a live lookup in official company registers (exists, active, good standing, officers), sanctions and PEP lists, ICIJ Offshore Leaks and 10 years of adverse media, each finding naming its kind of source. A due-diligence aid, not a regulated AML/KYC provider. Pay per call: company lookup EUR 0.01 when found (100 free), /findings EUR 0.50, /run EUR 6.00; your first findings or report call is free. Requires uv (uvx) on the PATH.",
   "author": {
     "name": "SONAR",
     "email": "ivan@getsonar.report",
@@ -21,9 +21,10 @@
   "keywords": [
     "kyb",
     "due-diligence",
+    "company-lookup",
+    "company-registry",
     "sanctions-screening",
     "pep",
-    "company-registry",
     "offshore-leaks",
     "adverse-media",
     "third-party-risk"
@@ -33,7 +34,7 @@
     "entry_point": "src/getsonar_mcp/__main__.py",
     "mcp_config": {
       "command": "uvx",
-      "args": ["getsonar-mcp@0.2.0"],
+      "args": ["getsonar-mcp@0.3.0"],
       "env": {
         "SONAR_API_KEY": "${user_config.sonar_api_key}"
       }
@@ -49,11 +50,13 @@
     }
   },
   "tools": [
-    { "name": "kyb_findings", "description": "Fast KYB check: structured findings with sources (EUR 0.40)" },
-    { "name": "kyb_run_submit", "description": "Submit a full KYB report, returns a run_id (EUR 2.00)" },
-    { "name": "adverse_media", "description": "Negative news, complaints and reviews (EUR 0.40)" },
+    { "name": "company_lookup", "description": "Register check: exists, active, good standing (EUR 0.01 if found)" },
+    { "name": "company_officers", "description": "A company's officers from its register (EUR 0.01 if found)" },
+    { "name": "kyb_findings", "description": "KYB screening: sanctions, PEP, owners, adverse media (EUR 0.50)" },
+    { "name": "kyb_run_submit", "description": "Submit a full KYB report, returns a run_id (EUR 6.00)" },
+    { "name": "adverse_media", "description": "Negative news, complaints and reviews (EUR 0.50)" },
     { "name": "check_report_status", "description": "Poll an async report (free)" },
-    { "name": "account_balance", "description": "Balance and free trial calls remaining (free)" }
+    { "name": "account_balance", "description": "Balance, free calls and free lookups remaining (free)" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

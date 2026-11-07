@@ -1,7 +1,8 @@
 """SONAR KYB MCP server.
 
-Exposes SONAR's KYB due diligence and adverse media screening tools to
-MCP-compatible AI clients (Claude Desktop, Claude Code, Cursor, etc.).
+Exposes SONAR's company register lookup, KYB due diligence and adverse
+media screening tools to MCP-compatible AI clients (Claude Desktop,
+Claude Code, Cursor, etc.).
 Competitive intelligence tools were removed in 0.2.0 (product frozen).
 
 Two transports from one codebase:
@@ -17,4 +18,4 @@ Two transports from one codebase:
     See ``http_server.py`` and ``oauth.py`` for the deployment story.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

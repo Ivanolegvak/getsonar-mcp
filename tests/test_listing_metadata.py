@@ -48,7 +48,7 @@ def test_pricing_and_scope_copy() -> None:
         assert "strategic account" not in low, fname
         assert not re.search(r"\$\d", text), f"{fname}: prices are in euro"
         assert "zefix" not in low, fname
-    assert "€0.40" in README and "€2.00" in README
+    assert "€0.50" in README and "€6.00" in README
     assert "first API call is free" in README
 
 

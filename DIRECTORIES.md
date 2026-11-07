@@ -41,20 +41,27 @@ npx @anthropic-ai/mcpb@2.1.2 validate manifest.json
 `server.json`, `manifest.json` and `pyproject.toml` already point at
 `https://github.com/Ivanolegvak/getsonar-mcp`, so do this before step 2.
 
-## 2. PyPI — `getsonar-mcp` 0.2.0
+## 2. PyPI: `getsonar-mcp` 0.3.0
 
-PyPI is still on 0.1.9, which advertises the frozen competitive-intelligence tools.
+PyPI is on 0.2.0 (2026-10-24): wrong prices in its tool descriptions
+(EUR 0.40 / 2.00), no 202 polling on /findings, no company lookup. 0.2.1
+was never published; 0.3.0 supersedes it.
+
+Preferred: the public mirror's `.github/workflows/publish.yml` (Trusted
+Publishing to PyPI, then the MCP Registry via GitHub OIDC). Snapshot the
+mirror (step 1), push, then create a GitHub release `v0.3.0` on the mirror;
+the workflow publishes both. Manual fallback:
 
 ```bash
 cd mcp-server
 rm -rf dist && uv build
 uv publish            # needs a PyPI API token for getsonar-mcp (UV_PUBLISH_TOKEN), never commit it
-uvx --refresh --from getsonar-mcp==0.2.0 python -c "import getsonar_mcp; print(getsonar_mcp.__version__)"
+uvx --refresh --from getsonar-mcp==0.3.0 python -c "import getsonar_mcp; print(getsonar_mcp.__version__)"
 ```
 
 ## 3. Official MCP Registry — `io.github.Ivanolegvak/sonar-mcp`
 
-Needs step 2 (the registry fetches the 0.2.0 README from PyPI and looks for
+Needs step 2 (the registry fetches the 0.3.0 README from PyPI and looks for
 `<!-- mcp-name: io.github.Ivanolegvak/sonar-mcp -->`).
 
 ```bash
@@ -84,7 +91,7 @@ Needs step 4 (the list asks for a Glama listing). The fork `Ivanolegvak/awesome-
 sync it first. Add under **Finance & Fintech**, alphabetical:
 
 ```markdown
-- [Ivanolegvak/getsonar-mcp](https://github.com/Ivanolegvak/getsonar-mcp) 🐍 ☁️ - KYB due diligence on vendors, partners and resellers: 13 national business registries, sanctions and PEP screening, ICIJ Offshore Leaks and 10-year adverse media, with a source link for every finding. Pay per call, first call free.
+- [Ivanolegvak/getsonar-mcp](https://github.com/Ivanolegvak/getsonar-mcp) 🐍 ☁️ - KYB due diligence on vendors, partners and resellers: official company registries in 10+ countries, sanctions and PEP screening, ICIJ Offshore Leaks and 10-year adverse media, each finding naming its kind of source. Pay per call, first call free.
 ```
 
 PR title: `Add getsonar-mcp (KYB due diligence)`. This replaces the copy in
@@ -96,12 +103,12 @@ Smithery publishes local stdio servers as MCPB bundles.
 
 ```bash
 cd mcp-server
-npx @anthropic-ai/mcpb@2.1.2 pack . /tmp/getsonar-mcp-0.2.0.mcpb
+npx @anthropic-ai/mcpb@2.1.2 pack . /tmp/getsonar-mcp-0.3.0.mcpb
 ```
 
 1. Sign in at https://smithery.ai with GitHub (`Ivanolegvak`).
-2. Publish the bundle: **Publish server** → *Local (MCPB bundle)* → upload `/tmp/getsonar-mcp-0.2.0.mcpb`,
-   or `npx @smithery/cli mcp publish /tmp/getsonar-mcp-0.2.0.mcpb -n ivanolegvak/sonar`.
+2. Publish the bundle: **Publish server** → *Local (MCPB bundle)* → upload `/tmp/getsonar-mcp-0.3.0.mcpb`,
+   or `npx @smithery/cli mcp publish /tmp/getsonar-mcp-0.3.0.mcpb -n ivanolegvak/sonar`.
 3. Name `ivanolegvak/sonar`, display name "SONAR: KYB due diligence", homepage
    `https://getsonar.report/integrations`, repository the public mirror.
 4. Settings → Verification: complete the official-vendor checklist.
@@ -127,7 +134,8 @@ Same name, URL and description as step 7; category *Finance* (or *Business*). Re
 - KYB due diligence for vendors, partners and resellers. Never "AML provider", "KYC provider" or
   "compliance decision"; SONAR is a due-diligence aid.
 - No competitive intelligence or strategic accounts (frozen products).
-- API pricing: €0.40 per `/findings`, €2.00 per `/run`, your first API call is free (one
+- API pricing: €0.01 per company found by a lookup (a miss is free, 100 free per account),
+  €0.50 per `/findings`, €6.00 per `/run`, your first API call is free (one
   call since 2026-10-24). Say "your first call is free", not a multi-call or never-expiring
-  allowance, and don't mix it up with the web app's free plan (2 reports a month).
-- 13 national business registries (no Switzerland/Zefix).
+  allowance, and don't mix it up with the web app's free plan (1 full report per account, no card).
+- official company registries in 10+ countries (no Switzerland/Zefix). Say "10+ countries", not an exact count: Denmark (CVR) answers intermittently, the Netherlands (KVK) confirms the number only and Luxembourg (LBR) cannot be queried yet.

@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Ivanolegvak/sonar-mcp",
   "title": "SONAR: KYB due diligence",
-  "description": "KYB checks on any company: registries, sanctions, PEP, ICIJ Offshore Leaks, adverse media.",
+  "description": "Company register lookups and KYB checks: registries, sanctions, PEP, offshore leaks, adverse media.",
   "websiteUrl": "https://getsonar.report/integrations",
   "repository": {
     "url": "https://github.com/Ivanolegvak/getsonar-mcp",
@@ -15,13 +15,13 @@
       "sizes": ["any"]
     }
   ],
-  "version": "0.2.0",
+  "version": "0.3.0",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "getsonar-mcp",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "transport": {
         "type": "stdio"
       },
@@ -29,7 +29,7 @@
       "environmentVariables": [
         {
           "name": "SONAR_API_KEY",
-          "description": "Your SONAR API key (sk-sonar-...). Create one at https://getsonar.report/developer/keys. Your first API call is free.",
+          "description": "Your SONAR API key (sk-sonar-...). Create one at https://getsonar.report/developer/keys. A test key (sk-sonar-test-) runs company lookups for free against fixed scenarios.",
           "isRequired": true,
           "isSecret": true,
           "format": "string"
