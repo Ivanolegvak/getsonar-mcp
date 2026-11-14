@@ -5,6 +5,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/getsonar-mcp.svg)](https://pypi.org/project/getsonar-mcp/)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-listed-4f46e5)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Ivanolegvak/sonar-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Getsonar Mcp on AI Agents Listing](https://aiagentslisting.com/getsonar-mcp/badge.svg?claim=da803e32c22464740a0b0b1eec240924)](https://aiagentslisting.com/mcp/getsonar-mcp)
 
 MCP server for [SONAR](https://getsonar.report/integrations): **KYB due diligence on vendors, partners and resellers**, callable from your AI assistant.
 
