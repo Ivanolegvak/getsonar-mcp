@@ -69,8 +69,8 @@ def test_mcp_dependency_is_capped_below_2() -> None:
     assert "mcp>=1.10.0,<2" in (ROOT / "requirements.txt").read_text()
 
 
-def test_desktop_and_plugin_listing_requirements() -> None:
-    # Anthropic directory rules for local servers (claude.com/docs,
+def test_desktop_bundle_listing_requirements() -> None:
+    # Anthropic rules for the local MCPB bundle (claude.com/docs,
     # connectors/building/submission): privacy policy in manifest.json and a
     # "Privacy Policy" section in the README; the key is a sensitive setting.
     assert MANIFEST["manifest_version"] == "0.4"
@@ -85,13 +85,61 @@ def test_desktop_and_plugin_listing_requirements() -> None:
     assert (ROOT / MANIFEST["icon"]).is_file()
     for t in MANIFEST["tools"]:
         assert "EUR" in t["description"] or "free" in t["description"], t["name"]
+
+
+REMOTE_MCP_URL = "https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp"
+
+
+def test_plugin_uses_the_hosted_server() -> None:
+    # Claude directory "Plugin bundle" rules for an unverified organization
+    # (claude.com/docs/plugins/pre-submission-checklist): remote MCP servers
+    # only, an https URL, no credential in the plugin. OAuth runs in the
+    # client, so the plugin asks for no key and declares no userConfig.
     plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text())
-    assert plugin["privacyPolicyUrl"] == "https://getsonar.report/privacy"
-    assert plugin["userConfig"]["sonar_api_key"]["sensitive"] is True
+    assert "userConfig" not in plugin
     assert (ROOT / plugin["icon"]).is_file()
-    mcp_json = json.loads((ROOT / ".mcp.json").read_text())
-    server = mcp_json["mcpServers"]["sonar"]
-    assert server["command"] == "uvx"
-    # The directory blocks unpinned launchers: exact == pin only.
-    assert re.fullmatch(r"getsonar-mcp==\d+\.\d+\.\d+", server["args"][0])
-    assert server["env"]["SONAR_API_KEY"] == "${user_config.sonar_api_key}"
+    # Directory listing fields are top-level keys (code.claude.com plugins
+    # manifest-reference, "Directory listing fields"); `metadata` is
+    # free-form and the directory does not read it.
+    assert "metadata" not in plugin
+    for key in (
+        "documentationUrl",
+        "supportUrl",
+        "privacyPolicyUrl",
+        "termsOfServiceUrl",
+    ):
+        assert plugin[key].startswith("https://"), key
+    assert plugin["privacyPolicyUrl"] == "https://getsonar.report/privacy"
+    mcp_text = (ROOT / ".mcp.json").read_text()
+    assert "user_config" not in mcp_text and "sk-sonar" not in mcp_text
+    mcp_json = json.loads(mcp_text)
+    assert mcp_json == {
+        "mcpServers": {"sonar": {"type": "http", "url": REMOTE_MCP_URL}}
+    }
+    assert "### Claude plugin" in README and REMOTE_MCP_URL in README
+
+
+def test_plugin_icon_has_no_metadata_chunks() -> None:
+    # The portal flagged the old icon; it stays a bare 512x512 PNG (IHDR,
+    # IDAT, IEND only: no tEXt/iTXt/zTXt/eXIf metadata).
+    data = (ROOT / "icon.png").read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n"
+    chunks, i = [], 8
+    while i < len(data):
+        length = int.from_bytes(data[i : i + 4], "big")
+        chunks.append(data[i + 4 : i + 8])
+        i += 12 + length
+    assert set(chunks) <= {b"IHDR", b"IDAT", b"IEND"}, chunks
+    assert data[16:24] == (512).to_bytes(4, "big") * 2
+
+
+def test_mirror_leaves_out_internal_and_disallowed_files() -> None:
+    # The mirror root is the plugin folder, and the directory blocks dotenv
+    # files there: every .env* template must be in the snapshot EXCLUDE.
+    script = (ROOT / "scripts" / "snapshot-public-mirror.sh").read_text()
+    match = re.search(r"^EXCLUDE=\(([^)]*)\)$", script, re.M)
+    assert match, "no EXCLUDE=(...) in snapshot-public-mirror.sh"
+    excluded = set(match.group(1).split())
+    assert {"DIRECTORIES.md", ".env.example"} <= excluded
+    dotenv = {p.name for p in ROOT.glob(".env*") if p.name != ".env"}
+    assert dotenv <= excluded, dotenv - excluded

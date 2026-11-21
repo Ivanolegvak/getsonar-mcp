@@ -30,8 +30,23 @@ else
   mkdir -p "$OUT"
 fi
 
-# Tracked files only (no .venv, caches or a stray .env).
-git -C "$SRC" ls-files -z -- . | (cd "$SRC" && xargs -0 tar cf -) | (cd "$OUT" && tar xf -)
+# Tracked files only (no .venv, caches or a stray .env), minus files that
+# stay internal. DIRECTORIES.md is the maintainer's release and listing
+# runbook (portal steps, operator decisions); it was removed from the mirror
+# by hand twice before this exclusion existed. .env.example is a local-dev
+# template; the mirror root is also the Claude plugin folder, and the Claude
+# directory refuses dotenv files from unverified organizations (only
+# Markdown, text, JSON, YAML and images). README's Configuration table
+# documents the same variables.
+EXCLUDE=(DIRECTORIES.md .env.example)
+git -C "$SRC" ls-files -z -- . "${EXCLUDE[@]/#/:(exclude)}" \
+  | (cd "$SRC" && xargs -0 tar cf -) | (cd "$OUT" && tar xf -)
+for f in "${EXCLUDE[@]}"; do
+  if [ -e "$OUT/$f" ]; then
+    echo "internal file $f ended up in the snapshot; aborting" >&2
+    exit 1
+  fi
+done
 
 # Belt and braces: refuse if anything looks like a live key.
 if grep -rIlE 'sk-sonar-[A-Za-z0-9]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|BEGIN (RSA|OPENSSH) PRIVATE KEY' "$OUT"; then

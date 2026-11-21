@@ -409,14 +409,16 @@ def test_version_is_consistent() -> None:
     assert all(p["version"] == __version__ for p in server["packages"])
     assert manifest["version"] == __version__
     # The MCPB bundle runs its own bundled source (server type "uv"), so it
-    # carries no PyPI pin; the plugin's .mcp.json pins the PyPI release.
+    # carries no PyPI pin. The plugin's .mcp.json points at the hosted
+    # server (no package version in it), so only plugin.json carries one.
     assert manifest["server"]["type"] == "uv"
     assert (root / manifest["server"]["entry_point"]).is_file()
     assert [t["name"] for t in manifest["tools"]] == list(TOOL_NAMES)
     plugin = json.loads((root / ".claude-plugin" / "plugin.json").read_text())
     mcp_json = json.loads((root / ".mcp.json").read_text())
     assert plugin["version"] == __version__
-    assert mcp_json["mcpServers"]["sonar"]["args"] == [f"getsonar-mcp=={__version__}"]
+    assert mcp_json["mcpServers"]["sonar"]["type"] == "http"
+    assert "command" not in mcp_json["mcpServers"]["sonar"]
 
 
 def test_call_findings_polls_a_202_until_ready(monkeypatch) -> None:

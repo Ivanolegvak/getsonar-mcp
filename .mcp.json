@@ -1,11 +1,8 @@
 {
   "mcpServers": {
     "sonar": {
-      "command": "uvx",
-      "args": ["getsonar-mcp==0.3.1"],
-      "env": {
-        "SONAR_API_KEY": "${user_config.sonar_api_key}"
-      }
+      "type": "http",
+      "url": "https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp"
     }
   }
 }

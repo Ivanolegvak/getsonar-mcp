@@ -2,7 +2,7 @@
   "name": "getsonar-kyb",
   "displayName": "SONAR KYB",
   "version": "0.3.1",
-  "description": "KYB due diligence on vendors, partners and resellers: company registers, sanctions, PEP, offshore leaks and adverse media, through the getsonar-mcp server.",
+  "description": "KYB due diligence on vendors, partners and resellers: company registers, sanctions, PEP, offshore leaks and adverse media, through SONAR's hosted MCP server (sign in with your SONAR account).",
   "author": {
     "name": "SONAR",
     "email": "ivan@getsonar.report",
@@ -11,19 +11,18 @@
   "homepage": "https://getsonar.report/integrations",
   "repository": "https://github.com/Ivanolegvak/getsonar-mcp",
   "license": "MIT",
-  "keywords": ["kyb", "due-diligence", "company-registry", "sanctions-screening", "pep", "adverse-media", "third-party-risk"],
+  "keywords": [
+    "kyb",
+    "due-diligence",
+    "company-registry",
+    "sanctions-screening",
+    "pep",
+    "adverse-media",
+    "third-party-risk"
+  ],
   "icon": "./icon.png",
   "documentationUrl": "https://github.com/Ivanolegvak/getsonar-mcp#readme",
   "supportUrl": "https://github.com/Ivanolegvak/getsonar-mcp/issues",
   "privacyPolicyUrl": "https://getsonar.report/privacy",
-  "termsOfServiceUrl": "https://getsonar.report/terms",
-  "userConfig": {
-    "sonar_api_key": {
-      "type": "string",
-      "title": "SONAR API key",
-      "description": "Your sk-sonar-... key from https://getsonar.report/developer/keys",
-      "sensitive": true,
-      "required": true
-    }
-  }
+  "termsOfServiceUrl": "https://getsonar.report/terms"
 }

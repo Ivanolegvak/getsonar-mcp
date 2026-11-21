@@ -1,6 +1,11 @@
 # Publishes getsonar-mcp to PyPI (Trusted Publishing, no token) and then
 # to the official MCP Registry (GitHub OIDC login, no token).
 # Runs on a published GitHub release or manually (workflow_dispatch).
+#
+# Re-runnable: if this version is already on PyPI (PyPI never accepts the
+# same version twice), the upload is skipped and the registry job still
+# runs, so a re-run (or a manual dispatch) refreshes the MCP Registry entry
+# without anyone signing in with `mcp-publisher login github`.
 name: publish
 
 on:
@@ -17,9 +22,23 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Is this version already on PyPI?
+        id: check
+        run: |
+          VERSION=$(python3 -c "import json;print(json.load(open('server.json'))['version'])")
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/getsonar-mcp/$VERSION/json")
+          case "$CODE" in
+            200) echo "getsonar-mcp $VERSION is already on PyPI; skipping the upload"
+                 echo "exists=true" >> "$GITHUB_OUTPUT" ;;
+            404) echo "exists=false" >> "$GITHUB_OUTPUT" ;;
+            *)   echo "PyPI answered HTTP $CODE for $VERSION; not guessing" >&2; exit 1 ;;
+          esac
       - uses: astral-sh/setup-uv@v6
+        if: steps.check.outputs.exists != 'true'
       - run: uv build
+        if: steps.check.outputs.exists != 'true'
       - run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/
+        if: steps.check.outputs.exists != 'true'
 
   registry:
     needs: pypi

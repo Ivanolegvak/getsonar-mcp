@@ -80,6 +80,16 @@ claude mcp add sonar --env SONAR_API_KEY=sk-sonar-YOUR_KEY_HERE -- uvx getsonar-
 
 Add `--scope user` to make it available in every project. Check it with `claude mcp list`.
 
+### Claude plugin
+
+The `getsonar-kyb` Claude plugin (this folder: `.claude-plugin/plugin.json` and `.mcp.json`) runs nothing on your computer and needs no API key or `uv`. It connects Claude to SONAR's hosted MCP server at `https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp` (Streamable HTTP), which offers the same seven tools at the same prices. The first time Claude uses it, your client opens a browser window: select **Continue** on the consent page, sign in to your SONAR account and confirm with **Connect**. SONAR then creates an API key for that connection (named "MCP connector: <app>", listed and revocable under [Developer → API keys](https://getsonar.report/developer/keys)) and the client keeps only an OAuth token. In claude.ai and Cowork, connect it from the plugin's **Connectors** tab; Claude Code connects directly (check with `/mcp`).
+
+To add the same server without the plugin, in Claude Code:
+
+```bash
+claude mcp add --transport http sonar https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp
+```
+
 ### Cursor
 
 Edit `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one project):
@@ -361,13 +371,14 @@ uv sync
 uv run pytest        # stdio smoke test and formatter tests against a fake API, no network
 ```
 
-Maintainers: [ARCHITECTURE.md](./ARCHITECTURE.md) covers the module layout and the stdio / HTTP transports; [DIRECTORIES.md](./DIRECTORIES.md) covers releasing and listing in MCP directories.
+Maintainers: [ARCHITECTURE.md](./ARCHITECTURE.md) covers the module layout and the stdio / HTTP transports. More about SONAR: [getsonar.report](https://getsonar.report).
 
 ## Privacy Policy
 
 The full policy is at [getsonar.report/privacy](https://getsonar.report/privacy). For this server in short:
 
 - **What it collects and sends**: the arguments of each tool call (company name, country, registration number, website, VAT number, run IDs) and your `SONAR_API_KEY`, sent over HTTPS to the SONAR API at `api.getsonar.report` (or the `SONAR_API_BASE` you set). Nothing goes to any other destination, and there is no telemetry.
+- **Hosted server (Claude plugin)**: the plugin sends the same tool arguments to the hosted server at `sonar-mcp.sonar-mcp-remote.workers.dev` (a Cloudflare Worker run by SONAR), which forwards them to `api.getsonar.report` with the API key created when you connected. The Worker keeps only OAuth records (client registrations, grants and hashed tokens; the connection's key is stored encrypted inside the grant) and no report data. Revoking the "MCP connector" key under Developer → API keys disconnects it.
 - **Use and storage**: the API uses them to answer the call, bill it to your balance and keep your report history; the server itself writes nothing to disk and logs only to stderr. Claude Desktop keeps the API key in the system keychain (one-click .mcpb install; with a manual claude_desktop_config.json the key is stored in that file).
 - **Third parties**: to answer a call SONAR queries public sources (company registers, sanctions and PEP lists, ICIJ Offshore Leaks, news search) about the company you asked about, and shares personal data only with the providers on its [Subprocessors](https://getsonar.report/legal/subprocessors) page. SONAR does not sell personal data.
 - **Retention**: Retention follows the [privacy policy](https://getsonar.report/privacy). Deleting your SONAR account deletes your reports, keys and usage records at once; the policy lists the exceptions (tax records, backups).

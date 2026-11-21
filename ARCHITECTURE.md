@@ -16,13 +16,13 @@ entry points, and which file backs which install path.
 mcp-server/
 ├── README.md              ─ user-facing: install, config, tools (also the PyPI page)
 ├── ARCHITECTURE.md        ─ this doc
-├── DIRECTORIES.md         ─ release + MCP directory listing runbook
+├── DIRECTORIES.md         ─ release + MCP directory listing runbook (internal: not in the public mirror)
 ├── server.json            ─ official MCP Registry entry (mcp-publisher)
 ├── manifest.json          ─ MCPB bundle manifest (Claude Desktop one-click; manifest 0.4, server type uv)
 ├── mcpb_server.py         ─ stdio entry the MCPB bundle runs (uv run --frozen, bundled source)
-├── icon.png               ─ 512x512 icon for the MCPB bundle and the Claude plugin listing
-├── .claude-plugin/        ─ plugin.json: Claude plugin (directory route for this local server)
-├── .mcp.json              ─ the plugin's server: uvx getsonar-mcp==<version>
+├── (icon)                 ─ 512x512 PNG for the MCPB bundle and the Claude plugin listing (see below)
+├── .claude-plugin/        ─ plugin.json: Claude plugin (Claude directory "Plugin bundle")
+├── .mcp.json              ─ the plugin's server: the hosted remote server (http, OAuth), see mcp-remote/
 ├── smithery.yaml          ─ classic stdio config (old Smithery format, read by Glama; Smithery closed 2026-10-31)
 ├── glama.json             ─ Glama maintainer claim
 ├── tests/                 ─ stdio smoke test against a fake API + formatter tests (uv run pytest)
@@ -40,6 +40,10 @@ mcp-server/
         ├── tools.py           ─ MCP tool registrations (the 7 tools)
         └── client.py          ─ HTTP client + response formatters
 ```
+
+The icon file sits at the folder root as icon.png. It is named in plain
+text here, not in the tree above: the Claude directory holds for review a plugin whose
+docs put a bundled image's path in a code block or backticks.
 
 **Two transports, one tool definition.** `tools.py:register_tools()` is
 called from BOTH `__main__.py` (stdio) and `http_server.py` (HTTP). The
