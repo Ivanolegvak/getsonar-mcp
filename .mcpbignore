@@ -1,5 +1,7 @@
-# Files left out of the MCPB bundle (mcpb pack). The bundle only carries
-# the manifest and the package source; uvx installs getsonar-mcp itself.
+# Files left out of the MCPB bundle (mcpb pack). The bundle carries the
+# manifest, icon, pyproject.toml + uv.lock and the package source; Claude
+# Desktop builds the environment with uv (server type "uv", see
+# mcpb_server.py). uv.lock stays in so `uv run --frozen` pins every dependency.
 .venv/
 .pytest_cache/
 **/__pycache__/
@@ -10,7 +12,13 @@ Dockerfile
 oauth.py
 server.py
 requirements.txt
-uv.lock
 .env
 .env.example
 scripts/
+.github/
+.claude-plugin/
+.mcp.json
+smithery.yaml
+glama.json
+server.json
+*.mcpb

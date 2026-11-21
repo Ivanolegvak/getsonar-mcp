@@ -231,3 +231,64 @@ def test_error_message_reads_validation_errors() -> None:
     assert client._error_message(resp) == (
         "Invalid input. country: String should have at most 2 characters"
     )
+
+
+def test_restricted_fr_business_reads_details_not_published() -> None:
+    """Sirene opt-out (2026-11-08): never "None (123456789)", and no
+    "current officers only" line for an opted-out business."""
+    out = client.format_lookup(
+        {
+            "query": {"registration_number": "123456789", "country": "FR"},
+            "status": "FOUND",
+            "found": True,
+            "matches": [
+                {
+                    "name": None,
+                    "registration_number": "123456789",
+                    "status": "active",
+                    "restricted": True,
+                }
+            ],
+            "price_cents": 1,
+        }
+    )
+    assert "None (" not in out and "details not published" in out
+    off = client.format_officers(
+        {
+            "query": {"country": "FR", "registration_number": "123456789"},
+            "status": "FOUND",
+            "company": {"name": None, "registration_number": "123456789"},
+            "officers": [],
+            "history": False,
+            "restricted": True,
+            "price_cents": 1,
+        }
+    )
+    assert "current officers only" not in off and "opted out of publication" in off
+    rm = client.format_registry_match(
+        {
+            "status": "FOUND",
+            "country": "FR",
+            "registration_number": "123456789",
+            "company_status": "active",
+            "restricted": True,
+            "matches": [
+                {"name": None, "registration_number": "123456789", "status": "active"}
+            ],
+        }
+    )
+    assert "Details not published" in rm and "None" not in rm
+
+
+def test_no_em_dash_in_any_answer() -> None:
+    """Customer copy rule: no em dash in tool answers (the remote Worker's
+    golden cases cover every formatter branch)."""
+    import json
+    from pathlib import Path
+
+    golden = Path(__file__).resolve().parents[2] / "mcp-remote" / "spec" / "golden.json"
+    if not golden.exists():  # public mirror
+        return
+    data = json.loads(golden.read_text())
+    for case in data["formatters"] + data["tools"]:
+        assert "—" not in case["expected"], case.get("fn") or case.get("tool")

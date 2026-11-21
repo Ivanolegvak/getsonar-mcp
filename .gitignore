@@ -16,3 +16,6 @@ venv/
 
 # OS
 .DS_Store
+
+# MCPB bundles are built artifacts (mcpb pack), never committed
+*.mcpb

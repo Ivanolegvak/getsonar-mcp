@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "sonar": {
+      "command": "uvx",
+      "args": ["getsonar-mcp==0.3.1"],
+      "env": {
+        "SONAR_API_KEY": "${user_config.sonar_api_key}"
+      }
+    }
+  }
+}

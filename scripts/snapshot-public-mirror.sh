@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build a history-free snapshot of mcp-server/ for the PUBLIC mirror repo
 # github.com/Ivanolegvak/getsonar-mcp (the monorepo is private; Glama,
-# mcp.so, Smithery and the README badges need public source).
+# mcp.so and the README badges need public source).
 #
 # It only builds a local git repo with one commit. It never pushes: the
 # script prints the push command for a human to run after reviewing the

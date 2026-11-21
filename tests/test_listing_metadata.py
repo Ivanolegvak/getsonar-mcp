@@ -67,3 +67,31 @@ def test_mcp_dependency_is_capped_below_2() -> None:
     pyproject = PUBLIC_TEXTS["pyproject.toml"]
     assert re.search(r'"mcp>=[0-9.]+,<2"', pyproject)
     assert "mcp>=1.10.0,<2" in (ROOT / "requirements.txt").read_text()
+
+
+def test_desktop_and_plugin_listing_requirements() -> None:
+    # Anthropic directory rules for local servers (claude.com/docs,
+    # connectors/building/submission): privacy policy in manifest.json and a
+    # "Privacy Policy" section in the README; the key is a sensitive setting.
+    assert MANIFEST["manifest_version"] == "0.4"
+    assert MANIFEST["privacy_policies"] == ["https://getsonar.report/privacy"]
+    assert "## Privacy Policy" in README
+    key = MANIFEST["user_config"]["sonar_api_key"]
+    assert key["sensitive"] and key["required"]
+    assert (
+        MANIFEST["server"]["mcp_config"]["env"]["SONAR_API_KEY"]
+        == "${user_config.sonar_api_key}"
+    )
+    assert (ROOT / MANIFEST["icon"]).is_file()
+    for t in MANIFEST["tools"]:
+        assert "EUR" in t["description"] or "free" in t["description"], t["name"]
+    plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text())
+    assert plugin["privacyPolicyUrl"] == "https://getsonar.report/privacy"
+    assert plugin["userConfig"]["sonar_api_key"]["sensitive"] is True
+    assert (ROOT / plugin["icon"]).is_file()
+    mcp_json = json.loads((ROOT / ".mcp.json").read_text())
+    server = mcp_json["mcpServers"]["sonar"]
+    assert server["command"] == "uvx"
+    # The directory blocks unpinned launchers: exact == pin only.
+    assert re.fullmatch(r"getsonar-mcp==\d+\.\d+\.\d+", server["args"][0])
+    assert server["env"]["SONAR_API_KEY"] == "${user_config.sonar_api_key}"

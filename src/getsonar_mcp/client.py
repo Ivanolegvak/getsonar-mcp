@@ -17,7 +17,7 @@ import httpx
 
 logger = logging.getLogger("getsonar-mcp.client")
 
-# Public-API base URL. Custom-domain default — overridable for staging /
+# Public-API base URL. Custom-domain default: overridable for staging /
 # self-hosted deployments via env.
 DEFAULT_API_BASE = "https://api.getsonar.report"
 
@@ -25,8 +25,13 @@ DEFAULT_TIMEOUT_S = 120
 # Server-side bounded wait we ask /findings for: stays under the HTTP timeout.
 FINDINGS_SERVER_WAIT_S = 90
 
-# Where customers create API keys and top up their balance.
-KEYS_URL = "https://getsonar.report/developer/keys"
+# Where customers create API keys and top up their balance. `from=mcp` sets
+# api_keys.created_from; the utm_* tag a signup that starts here
+# (docs/gtm/GROWTH_PLAN.md §5).
+KEYS_URL = (
+    "https://getsonar.report/developer/keys"
+    "?from=mcp&utm_source=mcp&utm_medium=product&utm_campaign=mcp-2026q4"
+)
 
 
 def get_api_base() -> str:
@@ -45,7 +50,7 @@ def get_default_timeout() -> int:
 
 def get_api_key_from_env() -> str:
     """Resolve the API key from the environment. Raises a friendly error
-    when the env var is missing — the most common config mistake."""
+    when the env var is missing: the most common config mistake."""
     key = os.environ.get("SONAR_API_KEY", "").strip()
     if not key:
         raise RuntimeError(
@@ -204,7 +209,7 @@ async def call_findings(path: str, api_key: str, body: dict) -> dict:
 def format_findings(result: dict, title: str) -> str:
     """Format a /findings API response as readable Markdown for the LLM.
 
-    Phase AD3 follow-up (2026-05-09) — Bug 9 fix:
+    Phase AD3 follow-up (2026-05-09): Bug 9 fix:
       Added (a) field_status 3-state surfacing (Bug 5), and
       (b) a hard 22 KB output cap to stay safely under MCP's
       ~25 KB transport boundary even for big reports.
@@ -370,6 +375,11 @@ def format_registry_match(rm: dict) -> str:
         lines.append(
             "More than one active company holds this name: pass `registration_number`."
         )
+    if rm.get("restricted"):
+        lines.append(
+            "- Details not published: the business opted out of publication in the "
+            "French register (Sirene); only its number and status are given."
+        )
     for key, label in (
         ("name", "Registered name"),
         ("registration_number", "Number"),
@@ -395,7 +405,8 @@ def format_registry_match(rm: dict) -> str:
     for m in (rm.get("matches") or [])[:10]:
         if status != "FOUND" or len(rm.get("matches") or []) > 1:
             lines.append(
-                f"- Candidate: {m.get('name')} ({m.get('registration_number') or 'no number'}), "
+                f"- Candidate: {m.get('name') or 'details not published'} "
+                f"({m.get('registration_number') or 'no number'}), "
                 f"{m.get('status') or 'unknown'}"
             )
     if rm.get("last_updated"):
@@ -456,7 +467,8 @@ def format_lookup(result: dict) -> str:
     if status == "FOUND" and matches:
         m = matches[0]
         lines.append(
-            f"- {m.get('name')} ({m.get('registration_number')}): {m.get('status')}"
+            f"- {m.get('name') or 'details not published (the business opted out of publication)'} ({m.get('registration_number')}): "
+            f"{m.get('status')}"
             + (
                 f" (register: {m['register_status']})"
                 if m.get("register_status")
@@ -466,8 +478,9 @@ def format_lookup(result: dict) -> str:
         lines.append(f"- Good standing: {_good_standing(m.get('good_standing'))}")
     elif status == "NOT_FOUND":
         lines.append(
-            "- The register holds no company of exactly this name (or number). A name that "
-            "only resembles a registered one is NOT_FOUND."
+            "- No company of exactly this name (or number) that SONAR can return. A name "
+            "that only resembles a registered one is NOT_FOUND, and a French business that "
+            "opted out of publication is never returned for a name."
         )
     elif status == "AMBIGUOUS":
         lines.append(
@@ -505,7 +518,10 @@ def format_officers(result: dict) -> str:
     lines = [
         f"# Officers: {name} ({q.get('country')} {q.get('registration_number')}): "
         f"**{result.get('status')}**",
-        f"- {current} current, {len(officers) - current} former"
+        "- Details not published: the business opted out of publication; no officers "
+        "are given."
+        if result.get("restricted")
+        else f"- {current} current, {len(officers) - current} former"
         + (
             ""
             if result.get("history") is not False
@@ -543,7 +559,7 @@ def format_run_started(result: dict, agent_type: str) -> str:
 def format_run_status(result: dict) -> str:
     """Format the /run/{id} status-poll response.
 
-    Phase AD3 follow-up (2026-05-09) — Bug 9 fix:
+    Phase AD3 follow-up (2026-05-09): Bug 9 fix:
       Previously dumped the entire report JSON and sliced at 8000 chars,
       causing mid-string truncation Claude Desktop surfaced. Reports
       are 30-50 KB; slicing always cut a critical structured field.
@@ -553,7 +569,7 @@ def format_run_status(result: dict) -> str:
       overhead. Fits comfortably under MCP's ~25 KB transport boundary.
 
       Customers who need the full structured report can fetch via
-      direct API call to /v1/agents/<agent>/run/<run_id> — included
+      direct API call to /v1/agents/<agent>/run/<run_id>: included
       as a footnote in the response.
     """
     # ``error is True`` is call_sonar's transport / HTTP error. A failed run
@@ -611,23 +627,23 @@ def _format_completed_report(result: dict) -> str:
     sections: list[str] = []
 
     # ── Headline ──────────────────────────────────────────────────────
-    overall = report_content.get("overall_status") or "—"
-    risk = report_content.get("risk_level") or "—"
+    overall = report_content.get("overall_status") or "n/a"
+    risk = report_content.get("risk_level") or "n/a"
     # `aml_screening_result` is the backend field name for the sanctions /
     # PEP screening outcome. SONAR is not a regulated AML provider, so the
     # label says "Screening".
-    screening = report_content.get("aml_screening_result") or "—"
-    ubo = report_content.get("ubo_verified") or "—"
-    company_status = report_content.get("company_status") or "—"
+    screening = report_content.get("aml_screening_result") or "n/a"
+    ubo = report_content.get("ubo_verified") or "n/a"
+    company_status = report_content.get("company_status") or "n/a"
 
     sections.append(
-        f"# {company} — KYB Report\n\n"
+        f"# {company}: KYB Report\n\n"
         f"**Overall: {overall}** · Risk: {risk} · Screening: {screening} · "
         f"UBO: {ubo} · Status: {company_status}"
     )
 
     # ── Run metadata ──────────────────────────────────────────────────
-    # Cost intentionally omitted — operator preference. Customers using
+    # Cost intentionally omitted: operator preference. Customers using
     # SONAR through Claude shouldn't see per-report dollar figures.
     sections.append(f"**Run**: `{run_id}` · {int(sweep_s)}s · {signals_used} signals")
 
@@ -667,7 +683,7 @@ def _format_completed_report(result: dict) -> str:
         rows = ["| Check | Result | Notes |", "|---|---|---|"]
         for c in checks[:20]:
             check = (c.get("check") or "").replace("|", "/")
-            res = (c.get("result") or "—").replace("|", "/")
+            res = (c.get("result") or "n/a").replace("|", "/")
             details = (c.get("details") or "").replace("|", "/").replace("\n", " ")
             if len(details) > 90:
                 details = details[:87] + "..."
@@ -687,9 +703,9 @@ def _format_completed_report(result: dict) -> str:
             action = f.get("recommended_action") or ""
             if len(action) > 120:
                 action = action[:117] + "..."
-            rid = f.get("flag_id") or "—"
+            rid = f.get("flag_id") or "n/a"
             rows.append(
-                f"- **{rid}** [{sev}] **{title}** — {desc}"
+                f"- **{rid}** [{sev}] **{title}**: {desc}"
                 + (f"\n  *Action*: {action}" if action else "")
             )
         sections.append("## Risk Flags\n" + "\n".join(rows))
@@ -709,11 +725,11 @@ def _format_completed_report(result: dict) -> str:
             sorted_dirs = directors
         for d in sorted_dirs[:5]:
             name = d.get("name") or "(unknown)"
-            role = d.get("role") or "—"
-            appt = d.get("date_of_appointment") or "—"
+            role = d.get("role") or "n/a"
+            appt = d.get("date_of_appointment") or "n/a"
             rows.append(f"- {name} · {role} · appointed {appt}")
         if len(directors) > 5:
-            rows.append(f"- _(+{len(directors) - 5} more — see full report)_")
+            rows.append(f"- _(+{len(directors) - 5} more, see full report)_")
         sections.append(
             f"## Directors & Officers ({len(directors)} total)\n" + "\n".join(rows)
         )

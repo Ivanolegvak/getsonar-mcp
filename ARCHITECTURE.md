@@ -18,8 +18,12 @@ mcp-server/
 ├── ARCHITECTURE.md        ─ this doc
 ├── DIRECTORIES.md         ─ release + MCP directory listing runbook
 ├── server.json            ─ official MCP Registry entry (mcp-publisher)
-├── manifest.json          ─ MCPB bundle manifest (Smithery, Claude Desktop one-click)
-├── smithery.yaml          ─ classic Smithery stdio config
+├── manifest.json          ─ MCPB bundle manifest (Claude Desktop one-click; manifest 0.4, server type uv)
+├── mcpb_server.py         ─ stdio entry the MCPB bundle runs (uv run --frozen, bundled source)
+├── icon.png               ─ 512x512 icon for the MCPB bundle and the Claude plugin listing
+├── .claude-plugin/        ─ plugin.json: Claude plugin (directory route for this local server)
+├── .mcp.json              ─ the plugin's server: uvx getsonar-mcp==<version>
+├── smithery.yaml          ─ classic stdio config (old Smithery format, read by Glama; Smithery closed 2026-10-31)
 ├── glama.json             ─ Glama maintainer claim
 ├── tests/                 ─ stdio smoke test against a fake API + formatter tests (uv run pytest)
 ├── scripts/               ─ snapshot-public-mirror.sh (public source mirror)
@@ -51,6 +55,7 @@ Python-module invocation.
 |---|---|---|---|
 | `uvx getsonar-mcp` | `src/getsonar_mcp/__main__.py` | **stdio** | Claude Desktop, Claude Code, Cursor, Windsurf, Continue.dev — local installs |
 | `python -m getsonar_mcp.http_server` | `src/getsonar_mcp/http_server.py` | **Streamable HTTP** | Hosted / remote MCP — Anthropic MCP directory listings, web clients |
+| `uv run --frozen mcpb_server.py` | `mcp-server/mcpb_server.py` | **stdio** | The MCPB bundle (Claude Desktop extension), running the source it ships |
 | `python server.py` | `mcp-server/server.py` | Streamable HTTP (legacy) | Render container — kept for back-compat with the original Dockerfile `CMD ["python", "server.py"]` |
 
 `server.py` is a 25-line shim that imports `http_server.main()` so the
@@ -85,7 +90,7 @@ arguments); `main()` calls `run(transport="streamable-http")`. Reads
 `MCP_HOST` / `PORT` env vars.
 
 ### `src/getsonar_mcp/tools.py`
-Where the 7 MCP tools are defined and registered (0.3.0):
+Where the 7 MCP tools are defined and registered (0.3.1):
 
 | Tool | Endpoint | Price |
 |---|---|---|
@@ -104,6 +109,19 @@ NOT_SEARCHED). The lookup tools render a short headline and then the API's
 full JSON, so new response fields reach the model without a release.
 `DELETE /v1/companies/lookup(s)` is deliberately not a tool (destructive,
 account admin, not an agent task).
+
+Every tool sets a top-level `title` (MCP 2025-06-18) and the same title in
+`annotations` (older clients read it there), plus `readOnlyHint`,
+`destructiveHint` (always false: nothing deletes or overwrites user data) and
+`openWorldHint`. The Claude Connectors Directory requires a title and a
+read-only or destructive hint on every tool; `tests/test_stdio_smoke.py`
+checks it. Operator decision 2026-11-21: tools that charge EUR 0.50 or more
+per call (`kyb_findings`, `adverse_media`, `kyb_run_submit`) are
+`readOnlyHint: false` and `idempotentHint: false`, and their descriptions say
+"Charges EUR X per call to your SONAR balance.", so clients ask before each
+call. The EUR 0.01 lookups (`company_lookup`, `company_officers`) and the
+free tools stay read-only; the lookups state their price too. The smoke test
+asserts this split.
 
 The competitive-intelligence tools were removed in 0.2.0 (CI frozen; see
 `SONAR_DECISIONS/ci_sa_freeze.md` in the main repo).
@@ -171,6 +189,13 @@ Six functions:
 | `validate_token()` | Per-request — checks Bearer token, returns the SONAR API key |
 | `revoke_token()` | Logout — deletes the token from the in-memory store |
 | `_sign(data)` | HMAC helper — shared signing key from `OAUTH_SECRET` env |
+
+**Superseded in purpose (2026-11-21):** the hosted OAuth server for Claude and
+ChatGPT connectors is the Cloudflare Worker in `mcp-remote/` of the main repo
+(`SONAR_DECISIONS/remote_mcp_cloudflare.md`). Its tool catalogue is generated
+from this package (`mcp-remote/scripts/export_spec.py`) and
+`tests/test_remote_spec_sync.py` fails when that export is stale, so re-run
+it after changing a tool, price, description or formatter here.
 
 **State storage:** in-memory only (`_auth_codes` and `_access_tokens`
 dicts). Fine for single-instance Render deploys; **needs to move to

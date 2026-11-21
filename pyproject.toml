@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "getsonar-mcp"
-version = "0.3.0"
+version = "0.3.1"
 description = "MCP server for SONAR: company register lookups and KYB due diligence on vendors, partners and resellers (registries, sanctions, PEP, ICIJ Offshore Leaks, adverse media) for AI agents."
 readme = "README.md"
 requires-python = ">=3.10"

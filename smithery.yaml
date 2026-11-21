@@ -1,8 +1,7 @@
-# Smithery / Glama configuration (classic stdio format).
-# Smithery's current flow publishes local stdio servers as an MCPB bundle
-# built from manifest.json (see DIRECTORIES.md); this file stays for the
-# directories that still read the classic format to start the server and
-# list its tools.
+# Classic stdio configuration in the old Smithery format.
+# Smithery itself closed on 2026-10-31 and our listing there is gone (see
+# DIRECTORIES.md step 6). The file stays because Glama and other directories
+# still read this format to start the server and list its tools.
 startCommand:
   type: stdio
   configSchema:

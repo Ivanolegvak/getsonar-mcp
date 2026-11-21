@@ -1,23 +1,25 @@
 {
-  "manifest_version": "0.3",
+  "manifest_version": "0.4",
   "name": "getsonar-mcp",
   "display_name": "SONAR: KYB due diligence",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Company register lookups and KYB checks: registries, sanctions, PEP, offshore leaks, adverse media.",
-  "long_description": "SONAR runs KYB (Know Your Business) due diligence on vendors, partners and resellers from public records: a live lookup in official company registers (exists, active, good standing, officers), sanctions and PEP lists, ICIJ Offshore Leaks and 10 years of adverse media, each finding naming its kind of source. A due-diligence aid, not a regulated AML/KYC provider. Pay per call: company lookup EUR 0.01 when found (100 free), /findings EUR 0.50, /run EUR 6.00; your first findings or report call is free. Requires uv (uvx) on the PATH.",
+  "long_description": "SONAR runs KYB (Know Your Business) due diligence on vendors, partners and resellers from public records: a live lookup in official company registers (exists, active, good standing, officers), sanctions and PEP lists, ICIJ Offshore Leaks and 10 years of adverse media, each finding naming its kind of source. A due-diligence aid, not a regulated AML/KYC provider. Pay per call from your SONAR balance: company lookup EUR 0.01 when found (100 free), KYB screening EUR 0.50, adverse media EUR 0.50, full report EUR 6.00; your first findings or report call is free. The three paid tools are marked as not read-only, so clients can ask before each one. The server sends the company details you ask about, and your API key, only to the SONAR API (api.getsonar.report) and stores nothing on your computer. Privacy policy: https://getsonar.report/privacy",
   "author": {
     "name": "SONAR",
     "email": "ivan@getsonar.report",
     "url": "https://getsonar.report"
   },
   "homepage": "https://getsonar.report/integrations",
-  "documentation": "https://getsonar.report/developers",
-  "support": "https://getsonar.report/developers",
+  "documentation": "https://github.com/Ivanolegvak/getsonar-mcp#readme",
+  "support": "https://github.com/Ivanolegvak/getsonar-mcp/issues",
+  "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Ivanolegvak/getsonar-mcp.git"
   },
   "license": "MIT",
+  "privacy_policies": ["https://getsonar.report/privacy"],
   "keywords": [
     "kyb",
     "due-diligence",
@@ -30,11 +32,11 @@
     "third-party-risk"
   ],
   "server": {
-    "type": "python",
-    "entry_point": "src/getsonar_mcp/__main__.py",
+    "type": "uv",
+    "entry_point": "mcpb_server.py",
     "mcp_config": {
-      "command": "uvx",
-      "args": ["getsonar-mcp@0.3.0"],
+      "command": "uv",
+      "args": ["run", "--directory", "${__dirname}", "--frozen", "--no-dev", "mcpb_server.py"],
       "env": {
         "SONAR_API_KEY": "${user_config.sonar_api_key}"
       }
@@ -44,17 +46,17 @@
     "sonar_api_key": {
       "type": "string",
       "title": "SONAR API key",
-      "description": "Your sk-sonar-... key from https://getsonar.report/developer/keys",
+      "description": "Your sk-sonar-... key from https://getsonar.report/developer/keys (a sk-sonar-test- key runs lookups free against fixed scenarios)",
       "sensitive": true,
       "required": true
     }
   },
   "tools": [
-    { "name": "company_lookup", "description": "Register check: exists, active, good standing (EUR 0.01 if found)" },
-    { "name": "company_officers", "description": "A company's officers from its register (EUR 0.01 if found)" },
-    { "name": "kyb_findings", "description": "KYB screening: sanctions, PEP, owners, adverse media (EUR 0.50)" },
-    { "name": "kyb_run_submit", "description": "Submit a full KYB report, returns a run_id (EUR 6.00)" },
-    { "name": "adverse_media", "description": "Negative news, complaints and reviews (EUR 0.50)" },
+    { "name": "company_lookup", "description": "Register check: exists, active, good standing. EUR 0.01 when found (100 free), a miss is free" },
+    { "name": "company_officers", "description": "A company's officers from its register. EUR 0.01 when found" },
+    { "name": "kyb_findings", "description": "KYB screening: register, owners, sanctions, PEP, offshore records, adverse media. Charges EUR 0.50 per call" },
+    { "name": "kyb_run_submit", "description": "Submit a full KYB report with an AI-written summary, returns a run_id. Charges EUR 6.00 per call" },
+    { "name": "adverse_media", "description": "Negative news, complaints and reviews. Charges EUR 0.50 per call" },
     { "name": "check_report_status", "description": "Poll an async report (free)" },
     { "name": "account_balance", "description": "Balance, free calls and free lookups remaining (free)" }
   ],

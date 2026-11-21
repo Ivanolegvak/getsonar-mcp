@@ -1,9 +1,17 @@
 """MCP tool definitions — shared across stdio and HTTP transports.
 
 Each ``@mcp.tool`` calls the SONAR public API via ``client.call_sonar()``
-and formats the response as Markdown the LLM can ingest. Tool annotations
-follow the MCP spec (``readOnlyHint``, ``destructiveHint``, ``openWorldHint``)
-so MCP clients can render them with appropriate UX warnings.
+and formats the response as Markdown the LLM can ingest. Every tool sets
+a top-level ``title`` (MCP 2025-06-18) and the same title in its annotations
+(older clients read it there), plus ``readOnlyHint`` / ``destructiveHint`` /
+``openWorldHint``, so MCP clients can render them with appropriate UX
+warnings. The Claude Connectors Directory requires a title and a read-only
+or destructive hint on every tool; tests/test_stdio_smoke.py checks both.
+Tools that charge EUR 0.50 or more per call (kyb_findings, adverse_media,
+kyb_run_submit) are ``readOnlyHint: false`` / ``idempotentHint: false`` and
+say "Charges EUR X per call to your SONAR balance." so clients ask before
+each call (operator decision 2026-11-21); the EUR 0.01 lookups stay
+read-only and state their price.
 
 Tool catalogue (``TOOL_NAMES`` below is the single list; the smoke test,
 README, server manifests and the /developers page are checked against it):
@@ -23,6 +31,8 @@ frozen and its /v1 agent answers 404 (SONAR_DECISIONS/ci_sa_freeze.md).
 v0.3.0 (2026-11-07): company_lookup and company_officers
 (``/v1/companies``); kyb_findings / kyb_run_submit take the KYB
 identifiers (country, state, registration_number, vat_number).
+v0.3.1 (2026-11-21): top-level tool titles; the three paid tools are
+not read-only (#524). Packaged as an MCPB bundle and a Claude plugin.
 """
 
 from __future__ import annotations
@@ -124,12 +134,13 @@ def register_tools(mcp: Any) -> None:
 
     # ── Company register (/v1/companies) ───────────────────────────────────
     @mcp.tool(
+        title="Company Register Lookup",
         annotations={
             "title": "Company Register Lookup",
             "readOnlyHint": True,
             "destructiveHint": False,
             "openWorldHint": True,
-        }
+        },
     )
     async def company_lookup(
         country: str,
@@ -154,9 +165,9 @@ def register_tools(mcp: Any) -> None:
         Price: EUR 0.01 only when the company is found (the first 100 found
         lookups per account are free); NOT_FOUND costs nothing.
 
-        Countries: GB, FR, CZ, SK, NO, FI, CH, EE, LV, US (by name or number);
+        Countries: GB, FR, CZ, SK, NO, FI, EE, LV, US (by name or number);
         PL, BE, BR by registration_number only. US needs `state` (NY, CO, OR,
-        CT, TX, PA, FL).
+        CT, TX, PA, FL, IA, DC). Switzerland (CH) is not connected yet.
 
         Args:
             country: ISO 3166-1 alpha-2 code of the register, e.g. "GB"
@@ -185,12 +196,13 @@ def register_tools(mcp: Any) -> None:
         return format_lookup(result)
 
     @mcp.tool(
+        title="Company Officers",
         annotations={
             "title": "Company Officers",
             "readOnlyHint": True,
             "destructiveHint": False,
             "openWorldHint": True,
-        }
+        },
     )
     async def company_officers(country: str, registration_number: str) -> str:
         """List a company's officers (directors, secretaries, board members)
@@ -219,12 +231,14 @@ def register_tools(mcp: Any) -> None:
 
     # ── KYB agent ──────────────────────────────────────────────────────────
     @mcp.tool(
+        title="KYB Screening (findings)",
         annotations={
             "title": "KYB Screening (findings)",
-            "readOnlyHint": True,
+            "readOnlyHint": False,
             "destructiveHint": False,
+            "idempotentHint": False,
             "openWorldHint": True,
-        }
+        },
     )
     async def kyb_findings(
         company_name: str,
@@ -244,8 +258,8 @@ def register_tools(mcp: Any) -> None:
         press". For only "does it exist / is it active", company_lookup is
         far cheaper. Usually 30-90 s (the tool waits for queued results).
 
-        Price: EUR 0.50 per call, charged even when nothing is found (a new
-        account's first call is free). Rate limit: 10 calls a minute per key.
+        Charges EUR 0.50 per call to your SONAR balance, even when nothing
+        is found (a new account's first call is free). Rate limit: 10 calls a minute per key.
 
         Args:
             company_name: Legal name of the company (e.g. "Tesco PLC")
@@ -265,12 +279,14 @@ def register_tools(mcp: Any) -> None:
         return format_findings(result, f"KYB Screening: {company_name}")
 
     @mcp.tool(
+        title="KYB Full Report (async, EUR 6)",
         annotations={
             "title": "KYB Full Report (async, EUR 6)",
             "readOnlyHint": False,
             "destructiveHint": False,
+            "idempotentHint": False,
             "openWorldHint": True,
-        }
+        },
     )
     async def kyb_run_submit(
         company_name: str,
@@ -281,8 +297,9 @@ def register_tools(mcp: Any) -> None:
         vat_number: str = "",
     ) -> str:
         """Order a full written KYB due-diligence report (async). Use ONLY
-        when the user asks for a full or written report: it costs EUR 6.00
-        per call (a new account's first call is free). For a quick check use
+        when the user asks for a full or written report. Charges EUR 6.00
+        per call to your SONAR balance (a new account's first call is free).
+        For a quick check use
         company_lookup (EUR 0.01) or kyb_findings (EUR 0.50).
 
         Returns a run_id immediately; poll check_report_status after 1-3
@@ -313,12 +330,14 @@ def register_tools(mcp: Any) -> None:
 
     # ── Adverse Media ──────────────────────────────────────────────────────
     @mcp.tool(
+        title="Adverse Media Check",
         annotations={
             "title": "Adverse Media Check",
-            "readOnlyHint": True,
+            "readOnlyHint": False,
             "destructiveHint": False,
+            "idempotentHint": False,
             "openWorldHint": True,
-        }
+        },
     )
     async def adverse_media(company_name: str, website: str = "") -> str:
         """Screen a company for negative news, complaints and bad reviews
@@ -327,7 +346,8 @@ def register_tools(mcp: Any) -> None:
         No register, sanctions or PEP screening: kyb_findings covers those
         and adverse media at the same price, so prefer it unless the user
         wants news and reviews only.
-        Price: EUR 0.50 per call (a new account's first call is free).
+        Charges EUR 0.50 per call to your SONAR balance (a new account's
+        first call is free).
 
         Args:
             company_name: Company to screen
@@ -342,12 +362,13 @@ def register_tools(mcp: Any) -> None:
 
     # ── Async polling ──────────────────────────────────────────────────────
     @mcp.tool(
+        title="Check Report Status",
         annotations={
             "title": "Check Report Status",
             "readOnlyHint": True,
             "destructiveHint": False,
             "openWorldHint": False,
-        }
+        },
     )
     async def check_report_status(
         run_id: str,
@@ -377,12 +398,13 @@ def register_tools(mcp: Any) -> None:
 
     # ── Account / billing ──────────────────────────────────────────────────
     @mcp.tool(
+        title="Account Balance & Usage",
         annotations={
             "title": "Account Balance & Usage",
             "readOnlyHint": True,
             "destructiveHint": False,
             "openWorldHint": False,
-        }
+        },
     )
     async def account_balance() -> str:
         """Check the prepaid balance, the free trial call and the free

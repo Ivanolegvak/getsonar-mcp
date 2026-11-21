@@ -232,6 +232,43 @@ def test_stdio_lists_tools_and_calls_fake_api(fake_api: str) -> None:
                             t.name
                         )
                         assert "$" not in (t.description or ""), t.name
+                        # Claude Connectors Directory: every tool needs a
+                        # title and an explicit read-only / destructive hint.
+                        ann = t.annotations
+                        assert t.title and ann and ann.title == t.title, t.name
+                        assert ann.readOnlyHint is not None, t.name
+                        assert ann.destructiveHint is not None, t.name
+                        # Nothing here deletes or overwrites user data.
+                        assert ann.destructiveHint is False, t.name
+
+                    by_name = {t.name: t for t in tools}
+                    # Operator decision 2026-11-21: a tool that charges EUR 0.50
+                    # or more is not read-only, so clients ask before each call,
+                    # and its description says what it charges.
+                    paid = {
+                        "kyb_findings": "0.50",
+                        "adverse_media": "0.50",
+                        "kyb_run_submit": "6.00",
+                    }
+                    for name, price in paid.items():
+                        ann = by_name[name].annotations
+                        assert ann.readOnlyHint is False, name
+                        assert ann.idempotentHint is False, name
+                        assert (
+                            f"Charges EUR {price} per call to your SONAR balance"
+                            in " ".join((by_name[name].description or "").split())
+                        ), name
+                    for name in ("company_lookup", "company_officers"):
+                        assert by_name[name].annotations.readOnlyHint is True, name
+                        assert "EUR 0.01" in by_name[name].description, name
+                    for name in ("check_report_status", "account_balance"):
+                        assert by_name[name].annotations.readOnlyHint is True, name
+                    assert set(paid) | {
+                        "company_lookup",
+                        "company_officers",
+                        "check_report_status",
+                        "account_balance",
+                    } == set(TOOL_NAMES)
 
                     by_name = {t.name: t for t in tools}
                     assert by_name["kyb_findings"].inputSchema["required"] == [
@@ -371,8 +408,15 @@ def test_version_is_consistent() -> None:
     assert server["version"] == __version__
     assert all(p["version"] == __version__ for p in server["packages"])
     assert manifest["version"] == __version__
-    assert f"getsonar-mcp@{__version__}" in manifest["server"]["mcp_config"]["args"]
+    # The MCPB bundle runs its own bundled source (server type "uv"), so it
+    # carries no PyPI pin; the plugin's .mcp.json pins the PyPI release.
+    assert manifest["server"]["type"] == "uv"
+    assert (root / manifest["server"]["entry_point"]).is_file()
     assert [t["name"] for t in manifest["tools"]] == list(TOOL_NAMES)
+    plugin = json.loads((root / ".claude-plugin" / "plugin.json").read_text())
+    mcp_json = json.loads((root / ".mcp.json").read_text())
+    assert plugin["version"] == __version__
+    assert mcp_json["mcpServers"]["sonar"]["args"] == [f"getsonar-mcp=={__version__}"]
 
 
 def test_call_findings_polls_a_202_until_ready(monkeypatch) -> None:

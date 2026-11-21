@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Getsonar Mcp on AI Agents Listing](https://aiagentslisting.com/getsonar-mcp/badge.svg?claim=da803e32c22464740a0b0b1eec240924)](https://aiagentslisting.com/mcp/getsonar-mcp)
 
-MCP server for [SONAR](https://getsonar.report/integrations): **KYB due diligence on vendors, partners and resellers**, callable from your AI assistant.
+MCP server for [SONAR](https://getsonar.report/integrations?utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4): **KYB due diligence on vendors, partners and resellers**, callable from your AI assistant.
 
 Ask Claude, Cursor or Windsurf whether a company exists and is in good standing, or to screen it, and it gets back the official register record, sanctions and PEP matches, ICIJ Offshore Leaks hits and adverse media, each finding naming the kind of source it came from.
 
@@ -15,7 +15,7 @@ Ask Claude, Cursor or Windsurf whether a company exists and is in good standing,
 
 ## Features
 
-- **Company register lookup**: a live search of the official register in about a second (GB, FR, CZ, SK, NO, FI, CH, EE, LV, US states; PL, BE, BR by number): exists or not, active, good standing, legal form, address, VAT number, previous names, officers and filings. €0.01 only when the company is found
+- **Company register lookup**: a live search of the official register in about a second (GB, FR, CZ, SK, NO, FI, EE, LV and 9 US states; PL, BE, BR by number): exists or not, active, good standing, legal form, address, VAT number, previous names, officers and filings. €0.01 only when the company is found
 - **Company registries in the KYB check**: official company registries in 10+ countries for legal name, number, status, address, officers and owners
 - **Sanctions and PEP screening**: native OFAC, UN, UK OFSI and Swiss SECO lists plus the OpenSanctions aggregator
 - **ICIJ Offshore Leaks**: Panama, Paradise and Pandora Papers, Bahamas Leaks
@@ -36,12 +36,12 @@ The API is pay per call:
 | `/run` (`kyb_run_submit`) | €6.00 |
 | `check_report_status`, `account_balance` | free |
 
-**Your first API call is free** (a findings or report call; lookups have their own 100 free). After that, calls are paid from a prepaid balance: top up from €5 at [getsonar.report/developer/keys](https://getsonar.report/developer/keys). Plans and the web app's free tier are on [getsonar.report/pricing](https://getsonar.report/pricing).
+**Your first API call is free** (a findings or report call; lookups have their own 100 free). After that, calls are paid from a prepaid balance: top up from €5 at [getsonar.report/developer/keys](https://getsonar.report/developer/keys?from=mcp&utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4). Plans and the web app's free tier are on [getsonar.report/pricing](https://getsonar.report/pricing?utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4).
 
 ## Get an API key
 
-1. Sign up at [getsonar.report](https://getsonar.report)
-2. Open [Developer → API keys](https://getsonar.report/developer/keys)
+1. Sign up at [getsonar.report](https://getsonar.report/?utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4)
+2. Open [Developer → API keys](https://getsonar.report/developer/keys?from=mcp&utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4)
 3. Click **Create API Key** and copy the `sk-sonar-...` key
 
 ## Installation
@@ -52,7 +52,9 @@ The key goes in the `SONAR_API_KEY` environment variable of the server process.
 
 ### Claude Desktop
 
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+One-click: download `sonar-kyb.mcpb` from the latest [GitHub release](https://github.com/Ivanolegvak/getsonar-mcp/releases), double-click it (or drag it into Claude Desktop, or **Settings > Extensions > Advanced settings > Install Extension...**) and paste your API key when asked. Claude Desktop stores the key in the system keychain and sets up Python with uv itself.
+
+Or by hand: edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
 ```json
 {
@@ -282,7 +284,7 @@ Listing tools works without a key; calling one needs a valid key.
 
 ## Test without paying (sandbox key)
 
-Create a test key (`sk-sonar-test-...`) on [Developer → API keys](https://getsonar.report/developer/keys) and put it in `SONAR_API_KEY`. It answers `company_lookup`, `company_officers` and `account_balance` with fixed, made-up scenarios, never calls a register and is never charged:
+Create a test key (`sk-sonar-test-...`) on [Developer → API keys](https://getsonar.report/developer/keys?from=mcp&utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4) and put it in `SONAR_API_KEY`. It answers `company_lookup`, `company_officers` and `account_balance` with fixed, made-up scenarios, never calls a register and is never charged:
 
 | `company_name` | Number | Answer |
 |---|---|---|
@@ -323,19 +325,22 @@ curl -X POST 'https://api.getsonar.report/v1/agents/kyb-diligence/run' \
 # Poll until status is "completed"
 curl 'https://api.getsonar.report/v1/agents/kyb-diligence/run/RUN_ID' -H "X-API-Key: $SONAR_API_KEY"
 
+# Free public link to the finished report (no key needed to open it); DELETE revokes it
+curl -X POST 'https://api.getsonar.report/v1/agents/kyb-diligence/run/RUN_ID/share' -H "X-API-Key: $SONAR_API_KEY"
+
 # Usage, balance and free trial calls left
 curl 'https://api.getsonar.report/v1/usage' -H "X-API-Key: $SONAR_API_KEY"
 ```
 
-Agents: `kyb-diligence` (registries, sanctions, PEP, UBOs, adverse media) and `adverse-media` (negative news only). The `website` field must be an `http://` or `https://` URL. Full OpenAPI spec: [api.getsonar.report/docs](https://api.getsonar.report/docs). Developer guide: [getsonar.report/developers](https://getsonar.report/developers).
+Agents: `kyb-diligence` (registries, sanctions, PEP, UBOs, adverse media) and `adverse-media` (negative news only). The `website` field must be an `http://` or `https://` URL. Full OpenAPI spec: [api.getsonar.report/docs](https://api.getsonar.report/docs). Developer guide: [getsonar.report/developers](https://getsonar.report/developers?utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4).
 
 ## Troubleshooting
 
 **Tools don't appear**: check the config file is valid JSON, restart the client, and run `uvx --version` in a terminal to confirm `uv` is installed.
 
-**`401 Unauthorized`**: `SONAR_API_KEY` is missing or wrong. Check it at [getsonar.report/developer/keys](https://getsonar.report/developer/keys).
+**`401 Unauthorized`**: `SONAR_API_KEY` is missing or wrong. Check it at [getsonar.report/developer/keys](https://getsonar.report/developer/keys?from=mcp&utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4).
 
-**`402 Payment Required`**: your free first call (or your 100 free lookups) is used and your balance is too low. Top up from €5 at [getsonar.report/developer/keys](https://getsonar.report/developer/keys).
+**`402 Payment Required`**: your free first call (or your 100 free lookups) is used and your balance is too low. Top up from €5 at [getsonar.report/developer/keys](https://getsonar.report/developer/keys?from=mcp&utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4).
 
 **`403 SANDBOX_KEY`**: a test key only runs `company_lookup`, `company_officers` and `account_balance`. Use a live key for screening and reports.
 
@@ -357,6 +362,16 @@ uv run pytest        # stdio smoke test and formatter tests against a fake API, 
 ```
 
 Maintainers: [ARCHITECTURE.md](./ARCHITECTURE.md) covers the module layout and the stdio / HTTP transports; [DIRECTORIES.md](./DIRECTORIES.md) covers releasing and listing in MCP directories.
+
+## Privacy Policy
+
+The full policy is at [getsonar.report/privacy](https://getsonar.report/privacy). For this server in short:
+
+- **What it collects and sends**: the arguments of each tool call (company name, country, registration number, website, VAT number, run IDs) and your `SONAR_API_KEY`, sent over HTTPS to the SONAR API at `api.getsonar.report` (or the `SONAR_API_BASE` you set). Nothing goes to any other destination, and there is no telemetry.
+- **Use and storage**: the API uses them to answer the call, bill it to your balance and keep your report history; the server itself writes nothing to disk and logs only to stderr. Claude Desktop keeps the API key in the system keychain (one-click .mcpb install; with a manual claude_desktop_config.json the key is stored in that file).
+- **Third parties**: to answer a call SONAR queries public sources (company registers, sanctions and PEP lists, ICIJ Offshore Leaks, news search) about the company you asked about, and shares personal data only with the providers on its [Subprocessors](https://getsonar.report/legal/subprocessors) page. SONAR does not sell personal data.
+- **Retention**: Retention follows the [privacy policy](https://getsonar.report/privacy). Deleting your SONAR account deletes your reports, keys and usage records at once; the policy lists the exceptions (tax records, backups).
+- **Contact**: ivan@getsonar.report.
 
 ## Support
 
