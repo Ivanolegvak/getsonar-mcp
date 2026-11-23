@@ -61,6 +61,12 @@ def test_server_json_limits() -> None:
     assert SERVER["websiteUrl"] == "https://getsonar.report/integrations"
 
 
+def test_server_json_lists_the_hosted_server() -> None:
+    # Registry-fed catalogues (Glama connectors, VS Code, GitHub MCP registry)
+    # only show the hosted server when server.json carries it under `remotes`.
+    assert SERVER["remotes"] == [{"type": "streamable-http", "url": REMOTE_MCP_URL}]
+
+
 def test_mcp_dependency_is_capped_below_2() -> None:
     # mcp 2.x removed mcp.server.fastmcp; an uncapped pin breaks
     # `uvx getsonar-mcp` for every new install.

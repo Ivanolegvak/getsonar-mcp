@@ -667,6 +667,13 @@ def _format_completed_report(result: dict) -> str:
             ("vat_tax_id", "VAT/Tax ID"),
             ("registered_address", "Address"),
             ("industry_sic", "SIC"),
+            # Singapore register details (backend apply_sg_details).
+            ("industry_ssic", "SSIC"),
+            ("officers_on_record", "Officers on record"),
+            ("former_names", "Former names"),
+            ("auditor", "Auditor"),
+            ("last_annual_return", "Last annual return"),
+            ("accounts_due", "Accounts due"),
             ("website", "Website"),
         ]:
             val = (ci.get(key) or "").strip()

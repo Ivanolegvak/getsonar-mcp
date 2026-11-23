@@ -94,7 +94,7 @@ arguments); `main()` calls `run(transport="streamable-http")`. Reads
 `MCP_HOST` / `PORT` env vars.
 
 ### `src/getsonar_mcp/tools.py`
-Where the 7 MCP tools are defined and registered (0.3.1):
+Where the 7 MCP tools are defined and registered (0.3.2):
 
 | Tool | Endpoint | Price |
 |---|---|---|

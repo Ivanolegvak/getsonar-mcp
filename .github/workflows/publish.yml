@@ -4,8 +4,13 @@
 #
 # Re-runnable: if this version is already on PyPI (PyPI never accepts the
 # same version twice), the upload is skipped and the registry job still
-# runs, so a re-run (or a manual dispatch) refreshes the MCP Registry entry
-# without anyone signing in with `mcp-publisher login github`.
+# runs, so a re-run (or a manual dispatch) finishes a release whose registry
+# step failed, without anyone signing in with `mcp-publisher login github`.
+# It cannot refresh an entry that is already published: the registry never
+# accepts the same version twice either. Changing the entry needs a new
+# version in every file (PyPI and registry together); a server.json-only
+# version bump fails here, because the registry job waits for that version
+# on PyPI.
 name: publish
 
 on:

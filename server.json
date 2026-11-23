@@ -15,13 +15,19 @@
       "sizes": ["any"]
     }
   ],
-  "version": "0.3.1",
+  "version": "0.3.2",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp"
+    }
+  ],
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "getsonar-mcp",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "transport": {
         "type": "stdio"
       },

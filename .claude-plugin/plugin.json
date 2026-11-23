@@ -1,7 +1,7 @@
 {
   "name": "getsonar-kyb",
   "displayName": "SONAR KYB",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "KYB due diligence on vendors, partners and resellers: company registers, sanctions, PEP, offshore leaks and adverse media, through SONAR's hosted MCP server (sign in with your SONAR account).",
   "author": {
     "name": "SONAR",

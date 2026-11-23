@@ -33,6 +33,8 @@ v0.3.0 (2026-11-07): company_lookup and company_officers
 identifiers (country, state, registration_number, vat_number).
 v0.3.1 (2026-11-21): top-level tool titles; the three paid tools are
 not read-only (#524). Packaged as an MCPB bundle and a Claude plugin.
+v0.3.2 (2026-11-23): no tool changes; republished so the official MCP
+Registry entry carries the hosted server under ``remotes`` (#589).
 """
 
 from __future__ import annotations
