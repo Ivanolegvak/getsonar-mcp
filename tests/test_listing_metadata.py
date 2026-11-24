@@ -5,11 +5,16 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+import subprocess
 from pathlib import Path
+
+import pytest
 
 from getsonar_mcp.tools import TOOL_NAMES
 
 ROOT = Path(__file__).resolve().parents[1]
+PLUGIN = ROOT / "claude-plugin"
 README = (ROOT / "README.md").read_text()
 SERVER = json.loads((ROOT / "server.json").read_text())
 MANIFEST = json.loads((ROOT / "manifest.json").read_text())
@@ -101,9 +106,12 @@ def test_plugin_uses_the_hosted_server() -> None:
     # (claude.com/docs/plugins/pre-submission-checklist): remote MCP servers
     # only, an https URL, no credential in the plugin. OAuth runs in the
     # client, so the plugin asks for no key and declares no userConfig.
-    plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text())
+    plugin = json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text())
     assert "userConfig" not in plugin
-    assert (ROOT / plugin["icon"]).is_file()
+    assert plugin["icon"] == "./icon.png"
+    # In the monorepo icon.png is a symlink to the package icon; the
+    # snapshot copies the file itself into the mirror.
+    assert (PLUGIN / "icon.png").read_bytes() == (ROOT / "icon.png").read_bytes()
     # Directory listing fields are top-level keys (code.claude.com plugins
     # manifest-reference, "Directory listing fields"); `metadata` is
     # free-form and the directory does not read it.
@@ -116,7 +124,7 @@ def test_plugin_uses_the_hosted_server() -> None:
     ):
         assert plugin[key].startswith("https://"), key
     assert plugin["privacyPolicyUrl"] == "https://getsonar.report/privacy"
-    mcp_text = (ROOT / ".mcp.json").read_text()
+    mcp_text = (PLUGIN / ".mcp.json").read_text()
     assert "user_config" not in mcp_text and "sk-sonar" not in mcp_text
     mcp_json = json.loads(mcp_text)
     assert mcp_json == {
@@ -140,8 +148,8 @@ def test_plugin_icon_has_no_metadata_chunks() -> None:
 
 
 def test_mirror_leaves_out_internal_and_disallowed_files() -> None:
-    # The mirror root is the plugin folder, and the directory blocks dotenv
-    # files there: every .env* template must be in the snapshot EXCLUDE.
+    # DIRECTORIES.md stays internal; .env* templates stay out of the public
+    # mirror (they were blocked when the mirror root was the plugin folder).
     script = (ROOT / "scripts" / "snapshot-public-mirror.sh").read_text()
     match = re.search(r"^EXCLUDE=\(([^)]*)\)$", script, re.M)
     assert match, "no EXCLUDE=(...) in snapshot-public-mirror.sh"
@@ -149,3 +157,77 @@ def test_mirror_leaves_out_internal_and_disallowed_files() -> None:
     assert {"DIRECTORIES.md", ".env.example"} <= excluded
     dotenv = {p.name for p in ROOT.glob(".env*") if p.name != ".env"}
     assert dotenv <= excluded, dotenv - excluded
+
+
+# The Claude directory accepts only these file types in a plugin from an
+# unverified organization (Markdown, text, JSON, YAML and PNG/JPEG/GIF/WebP/ICO
+# images): no scripts, lock or package-manager files, dotfiles such as
+# .mcpbignore, CLAUDE.md/AGENTS.md or extra .claude-plugin folders.
+PLUGIN_ALLOWED_SUFFIXES = {
+    ".md", ".txt", ".json", ".yaml", ".yml",
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico",
+}  # fmt: skip
+PLUGIN_EXPECTED = {".claude-plugin/plugin.json", ".mcp.json", "README.md", "icon.png"}
+
+
+def _plugin_files(folder: Path) -> set[str]:
+    return {
+        p.relative_to(folder).as_posix() for p in folder.rglob("*") if not p.is_dir()
+    }
+
+
+def test_plugin_folder_holds_only_allowed_files() -> None:
+    assert _plugin_files(PLUGIN) == PLUGIN_EXPECTED
+    script = (ROOT / "scripts" / "snapshot-public-mirror.sh").read_text()
+    match = re.search(r"^PLUGIN_FILES=\(([^)]*)\)$", script, re.M)
+    assert match, "no PLUGIN_FILES=(...) in snapshot-public-mirror.sh"
+    assert set(match.group(1).split()) == PLUGIN_EXPECTED
+    assert "PLUGIN_DIR=claude-plugin" in script
+    # The package root is no plugin any more: one manifest, in claude-plugin/.
+    assert not (ROOT / ".claude-plugin").exists()
+    assert not (ROOT / ".mcp.json").exists()
+
+
+def test_plugin_readme_copy() -> None:
+    text = (PLUGIN / "README.md").read_text()
+    prose = re.sub(r"```.*?```", "", text, flags=re.S)
+    assert len(prose.split()) >= 40  # directory minimum, code blocks excluded
+    assert "\u2014" not in text and "\u2013" not in text  # no em or en dashes
+    low = text.lower()
+    disclaimer = "is **not** a regulated aml/kyc provider"
+    assert disclaimer in low
+    low = low.replace(disclaimer, "")  # the only allowed mention
+    for banned in ("aml provider", "kyc provider", "competitive", "lifetime"):
+        assert banned not in low, banned
+    assert REMOTE_MCP_URL in text
+    for name in TOOL_NAMES:
+        assert f"| `{name}` |" in text, name
+    assert "€0.50" in text and "€6.00" in text
+    assert "https://getsonar.report/privacy" in text
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
+def test_mirror_plugin_folder_has_exactly_the_allowed_files(tmp_path: Path) -> None:
+    # Build the real snapshot and check the folder the portal reads.
+    if subprocess.run(
+        ["git", "-C", str(ROOT), "rev-parse"], capture_output=True
+    ).returncode:
+        pytest.skip("not a git checkout")
+    out = tmp_path / "mirror"
+    subprocess.run(
+        [str(ROOT / "scripts" / "snapshot-public-mirror.sh"), str(out)],
+        check=True,
+        capture_output=True,
+    )
+    folder = out / "claude-plugin"
+    files = _plugin_files(folder)
+    assert files == PLUGIN_EXPECTED
+    for rel in files:
+        path = folder / rel
+        assert not path.is_symlink(), rel
+        assert path.suffix.lower() in PLUGIN_ALLOWED_SUFFIXES, rel
+        assert not path.read_bytes().startswith(b"#!"), rel
+        assert path.stat().st_size < 256 * 1024, rel
+    assert (folder / "icon.png").read_bytes() == (ROOT / "icon.png").read_bytes()
+    manifests = [p for p in out.rglob(".claude-plugin") if ".git" not in p.parts]
+    assert manifests == [folder / ".claude-plugin"]

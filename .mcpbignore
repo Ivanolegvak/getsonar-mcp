@@ -16,8 +16,7 @@ requirements.txt
 .env.example
 scripts/
 .github/
-.claude-plugin/
-.mcp.json
+claude-plugin/
 smithery.yaml
 glama.json
 server.json

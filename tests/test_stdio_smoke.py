@@ -414,8 +414,9 @@ def test_version_is_consistent() -> None:
     assert manifest["server"]["type"] == "uv"
     assert (root / manifest["server"]["entry_point"]).is_file()
     assert [t["name"] for t in manifest["tools"]] == list(TOOL_NAMES)
-    plugin = json.loads((root / ".claude-plugin" / "plugin.json").read_text())
-    mcp_json = json.loads((root / ".mcp.json").read_text())
+    plugin_dir = root / "claude-plugin"
+    plugin = json.loads((plugin_dir / ".claude-plugin" / "plugin.json").read_text())
+    mcp_json = json.loads((plugin_dir / ".mcp.json").read_text())
     assert plugin["version"] == __version__
     assert mcp_json["mcpServers"]["sonar"]["type"] == "http"
     assert "command" not in mcp_json["mcpServers"]["sonar"]

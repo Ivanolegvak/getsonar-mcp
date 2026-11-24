@@ -34,19 +34,45 @@ fi
 # stay internal. DIRECTORIES.md is the maintainer's release and listing
 # runbook (portal steps, operator decisions); it was removed from the mirror
 # by hand twice before this exclusion existed. .env.example is a local-dev
-# template; the mirror root is also the Claude plugin folder, and the Claude
-# directory refuses dotenv files from unverified organizations (only
-# Markdown, text, JSON, YAML and images). README's Configuration table
-# documents the same variables.
+# template (README's Configuration table documents the same variables); it
+# was left out when the mirror root was still the Claude plugin folder and
+# stays out.
 EXCLUDE=(DIRECTORIES.md .env.example)
+# tar -h copies the file a symlink points to: claude-plugin/icon.png is a
+# symlink to the package icon here, and the Claude directory refuses
+# symbolic links in a plugin.
 git -C "$SRC" ls-files -z -- . "${EXCLUDE[@]/#/:(exclude)}" \
-  | (cd "$SRC" && xargs -0 tar cf -) | (cd "$OUT" && tar xf -)
+  | (cd "$SRC" && xargs -0 tar chf -) | (cd "$OUT" && tar xf -)
 for f in "${EXCLUDE[@]}"; do
   if [ -e "$OUT/$f" ]; then
     echo "internal file $f ended up in the snapshot; aborting" >&2
     exit 1
   fi
 done
+
+# The Claude plugin is the claude-plugin/ folder (portal "Plugin path"),
+# not the mirror root: the root carries Python, Docker, lock and CI files
+# for PyPI, Glama and the MCP Registry, and the Claude directory accepts
+# only Markdown, text, JSON, YAML and images in a plugin from an unverified
+# organization. The folder must hold exactly these files, as regular files,
+# and be the only .claude-plugin manifest in the mirror.
+PLUGIN_DIR=claude-plugin
+PLUGIN_FILES=(.claude-plugin/plugin.json .mcp.json README.md icon.png)
+actual="$(cd "$OUT/$PLUGIN_DIR" && find . -mindepth 1 ! -type d | sed 's|^\./||' | LC_ALL=C sort)"
+expected="$(printf '%s\n' "${PLUGIN_FILES[@]}" | LC_ALL=C sort)"
+if [ "$actual" != "$expected" ]; then
+  echo "$PLUGIN_DIR/ must hold exactly: ${PLUGIN_FILES[*]}; found:" >&2
+  echo "$actual" >&2
+  exit 1
+fi
+if [ -n "$(find "$OUT" -path "$OUT/.git" -prune -o -type l -print)" ]; then
+  echo "symbolic link in the snapshot; aborting" >&2
+  exit 1
+fi
+if [ "$(find "$OUT" -path "$OUT/.git" -prune -o -name .claude-plugin -print | wc -l | tr -d ' ')" != 1 ]; then
+  echo "more than one .claude-plugin folder in the snapshot; aborting" >&2
+  exit 1
+fi
 
 # Belt and braces: refuse if anything looks like a live key.
 if grep -rIlE 'sk-sonar-[A-Za-z0-9]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|BEGIN (RSA|OPENSSH) PRIVATE KEY' "$OUT"; then
@@ -64,6 +90,7 @@ git -C "$OUT" -c user.name="SONAR" -c user.email="ivan@getsonar.report" \
   commit -q -m "getsonar-mcp $VERSION (snapshot of the SONAR monorepo mcp-server/)"
 
 echo "Snapshot ready: $OUT (version $VERSION, $(git -C "$OUT" ls-files | wc -l | tr -d ' ') files)"
+echo "Claude plugin folder (portal Plugin path): $PLUGIN_DIR"
 echo "Review it (git -C '$OUT' show --stat), then publish with:"
 if [ "$UPDATE" = 1 ]; then
   echo "  git -C '$OUT' push"

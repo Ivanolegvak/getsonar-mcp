@@ -21,8 +21,9 @@ mcp-server/
 ├── manifest.json          ─ MCPB bundle manifest (Claude Desktop one-click; manifest 0.4, server type uv)
 ├── mcpb_server.py         ─ stdio entry the MCPB bundle runs (uv run --frozen, bundled source)
 ├── (icon)                 ─ 512x512 PNG for the MCPB bundle and the Claude plugin listing (see below)
-├── .claude-plugin/        ─ plugin.json: Claude plugin (Claude directory "Plugin bundle")
-├── .mcp.json              ─ the plugin's server: the hosted remote server (http, OAuth), see mcp-remote/
+├── claude-plugin/         ─ the Claude plugin (Claude directory "Plugin bundle", plugin path claude-plugin):
+│                            .claude-plugin/plugin.json, .mcp.json (the hosted remote server, http, OAuth,
+│                            see mcp-remote/), README.md, and the icon (symlink here, a copy in the mirror)
 ├── smithery.yaml          ─ classic stdio config (old Smithery format, read by Glama; Smithery closed 2026-10-31)
 ├── glama.json             ─ Glama maintainer claim
 ├── tests/                 ─ stdio smoke test against a fake API + formatter tests (uv run pytest)
