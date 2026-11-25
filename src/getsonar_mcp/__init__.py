@@ -18,4 +18,4 @@ Two transports from one codebase:
     See ``http_server.py`` and ``oauth.py`` for the deployment story.
 """
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"

@@ -15,7 +15,7 @@
       "sizes": ["any"]
     }
   ],
-  "version": "0.3.2",
+  "version": "0.3.3",
   "remotes": [
     {
       "type": "streamable-http",
@@ -27,7 +27,7 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "getsonar-mcp",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "transport": {
         "type": "stdio"
       },

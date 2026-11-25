@@ -35,6 +35,9 @@ v0.3.1 (2026-11-21): top-level tool titles; the three paid tools are
 not read-only (#524). Packaged as an MCPB bundle and a Claude plugin.
 v0.3.2 (2026-11-23): no tool changes; republished so the official MCP
 Registry entry carries the hosted server under ``remotes`` (#589).
+v0.3.3 (2026-11-25): no tool changes; the self-hosted HTTP transport binds
+127.0.0.1 by default, checks Host / Origin, and needs an opt-in plus a
+bearer token to listen beyond localhost (``http_server.py``).
 """
 
 from __future__ import annotations

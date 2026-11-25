@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "getsonar-mcp",
   "display_name": "SONAR: KYB due diligence",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Company register lookups and KYB checks: registries, sanctions, PEP, offshore leaks, adverse media.",
   "long_description": "SONAR runs KYB (Know Your Business) due diligence on vendors, partners and resellers from public records: a live lookup in official company registers (exists, active, good standing, officers), sanctions and PEP lists, ICIJ Offshore Leaks and 10 years of adverse media, each finding naming its kind of source. A due-diligence aid, not a regulated AML/KYC provider. Pay per call from your SONAR balance: company lookup EUR 0.01 when found (100 free), KYB screening EUR 0.50, adverse media EUR 0.50, full report EUR 6.00; your first findings or report call is free. The three paid tools are marked as not read-only, so clients can ask before each one. The server sends the company details you ask about, and your API key, only to the SONAR API (api.getsonar.report) and stores nothing on your computer. Privacy policy: https://getsonar.report/privacy",
   "author": {

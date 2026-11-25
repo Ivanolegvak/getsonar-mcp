@@ -137,6 +137,10 @@ Other clients (Continue.dev, Zed, Cline, ...) take the same command, args and en
 | `SONAR_API_TIMEOUT` | `120` | Per-request timeout in seconds |
 | `SONAR_MCP_LOG_LEVEL` | `INFO` | `DEBUG` for verbose logs (stderr) |
 
+### Self-hosted HTTP transport
+
+`getsonar-mcp-http` serves the same tools over Streamable HTTP for one user, using the `SONAR_API_KEY` it was started with. It listens on `127.0.0.1:8080` only and rejects requests whose `Host` or browser `Origin` is not local. To listen on another address you must pass `--allow-remote` (or `SONAR_MCP_ALLOW_REMOTE=1`) and set `SONAR_MCP_HTTP_TOKEN` (32+ characters); clients then send `Authorization: Bearer <token>`. `MCP_ALLOWED_HOSTS` and `MCP_ALLOWED_ORIGINS` (comma-separated) add names to the allowlists. For most setups use stdio (above) or the hosted server, which signs you in with OAuth.
+
 ## Tools
 
 | Tool | What it does | Price |

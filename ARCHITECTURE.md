@@ -32,7 +32,7 @@ mcp-server/
 ├── oauth.py               ─ OAuth 2.0 server (Anthropic MCP directory)
 ├── pyproject.toml         ─ PyPI package metadata (`getsonar-mcp`)
 ├── requirements.txt       ─ runtime deps for the legacy server.py path
-├── Dockerfile             ─ Render deployment image (CMD: python server.py)
+├── Dockerfile             ─ container image (CMD: stdio `python -m getsonar_mcp` since 0.3.3)
 └── src/
     └── getsonar_mcp/
         ├── __init__.py        ─ package version + public surface
@@ -59,12 +59,13 @@ Python-module invocation.
 | Path | File | Transport | Used by |
 |---|---|---|---|
 | `uvx getsonar-mcp` | `src/getsonar_mcp/__main__.py` | **stdio** | Claude Desktop, Claude Code, Cursor, Windsurf, Continue.dev — local installs |
-| `python -m getsonar_mcp.http_server` | `src/getsonar_mcp/http_server.py` | **Streamable HTTP** | Hosted / remote MCP — Anthropic MCP directory listings, web clients |
+| `python -m getsonar_mcp.http_server` | `src/getsonar_mcp/http_server.py` | **Streamable HTTP** | Self-hosted, single user, `127.0.0.1` by default (the hosted multi-user server is `mcp-remote/`) |
 | `uv run --frozen mcpb_server.py` | `mcp-server/mcpb_server.py` | **stdio** | The MCPB bundle (Claude Desktop extension), running the source it ships |
-| `python server.py` | `mcp-server/server.py` | Streamable HTTP (legacy) | Render container — kept for back-compat with the original Dockerfile `CMD ["python", "server.py"]` |
+| `python server.py` | `mcp-server/server.py` | Streamable HTTP (legacy) | Shim kept for anyone still running the pre-0.3.3 Dockerfile `CMD ["python", "server.py"]`; same safety rules as `http_server` |
 
-`server.py` is a 25-line shim that imports `http_server.main()` so the
-deployed container keeps working without changing the Dockerfile. New
+`server.py` is a 25-line shim that imports `http_server.main()`. No SONAR
+deployment runs it (`render.yaml` has no MCP service); since 0.3.3 the
+Dockerfile starts stdio. New
 deployments should target `python -m getsonar_mcp.http_server`
 directly.
 
@@ -89,13 +90,20 @@ Stdio entry. Three responsibilities:
   getsonar_mcp` and `uvx getsonar-mcp` resolve to.
 
 ### `src/getsonar_mcp/http_server.py`
-HTTP entry. `build_server(port)` builds the same FastMCP instance with
-`host` / `port` settings (they are constructor settings, not `run()`
-arguments); `main()` calls `run(transport="streamable-http")`. Reads
-`MCP_HOST` / `PORT` env vars.
+HTTP entry, self-hosted and single user (every request spends the one
+`SONAR_API_KEY`; the multi-user hosted server is `mcp-remote/`).
+`load_config()` reads `--host` / `--port` / `--allow-remote` and the env vars
+below; `build_server(cfg)` builds the same FastMCP instance with `host` /
+`port` and `transport_security` (Host / Origin allowlists, always on);
+`build_app(cfg)` wraps the Streamable HTTP app in `BearerTokenMiddleware`
+when `SONAR_MCP_HTTP_TOKEN` is set; `main()` serves it with uvicorn.
+Since 0.3.3 (private report of the 0.3.2 defaults): binds `127.0.0.1` by
+default, and a non-loopback bind refuses to start without both
+`SONAR_MCP_ALLOW_REMOTE=1` (or `--allow-remote`) and a token of 32+
+characters. Tests: `tests/test_http_security.py`.
 
 ### `src/getsonar_mcp/tools.py`
-Where the 7 MCP tools are defined and registered (0.3.2):
+Where the 7 MCP tools are defined and registered (0.3.3):
 
 | Tool | Endpoint | Price |
 |---|---|---|
@@ -231,7 +239,11 @@ the next Render deploy cycle.
 | `SONAR_API_BASE` | `https://api.getsonar.report` | `client.py:get_api_base` | Override for staging / self-hosted |
 | `SONAR_API_TIMEOUT` | `120` | `client.py:get_default_timeout` | Per-request timeout in seconds |
 | `SONAR_MCP_LOG_LEVEL` | `INFO` | `__main__.py:_setup_logging` | `DEBUG` for verbose dispatch |
-| `MCP_HOST` | `0.0.0.0` | `http_server.py` | HTTP transport bind address |
+| `MCP_HOST` | `127.0.0.1` | `http_server.py` | HTTP transport bind address (non-loopback needs the two rows below) |
+| `SONAR_MCP_ALLOW_REMOTE` | off | `http_server.py` | `1` allows a non-loopback bind (same as `--allow-remote`) |
+| `SONAR_MCP_HTTP_TOKEN` | (none) | `http_server.py` | Bearer token, 32+ chars; required beyond loopback, enforced whenever set |
+| `MCP_ALLOWED_HOSTS` | (loopback only) | `http_server.py` | Extra allowed `Host` values, comma-separated (`name:*` = any port) |
+| `MCP_ALLOWED_ORIGINS` | (loopback only) | `http_server.py` | Extra allowed browser `Origin` values, comma-separated |
 | `PORT` | `8080` | `http_server.py` | HTTP transport port |
 | `OAUTH_SECRET` | random per-process | `oauth.py:_sign` | HMAC signing key for codes/tokens |
 | `SONAR_APP_URL` | `https://getsonar.report` | `oauth.py:create_authorization_url` | OAuth landing page host |

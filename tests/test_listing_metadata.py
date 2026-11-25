@@ -77,7 +77,10 @@ def test_mcp_dependency_is_capped_below_2() -> None:
     # `uvx getsonar-mcp` for every new install.
     pyproject = PUBLIC_TEXTS["pyproject.toml"]
     assert re.search(r'"mcp>=[0-9.]+,<2"', pyproject)
-    assert "mcp>=1.10.0,<2" in (ROOT / "requirements.txt").read_text()
+    # >=1.30.0: the HTTP transport's Host / Origin checks are tested on it
+    # (0.3.3); pyproject and requirements.txt keep the same floor.
+    assert '"mcp>=1.30.0,<2"' in pyproject
+    assert "mcp>=1.30.0,<2" in (ROOT / "requirements.txt").read_text()
 
 
 def test_desktop_bundle_listing_requirements() -> None:
