@@ -23,7 +23,7 @@ Ask Claude, Cursor or Windsurf whether a company exists and is in good standing,
 - **Adverse media**: 10-year lookback on news, complaints and reviews
 - **Three call shapes**: a register lookup (about 1 s), structured screening findings (30-90 s; the tools poll the API's 202 + poll URL for you) or a full written report (async, about 3 min)
 
-Works with **Claude Desktop**, **Claude Code**, **Cursor**, **Windsurf** and any other [Model Context Protocol](https://modelcontextprotocol.io) client. Listed in the official MCP Registry as `io.github.Ivanolegvak/sonar-mcp`.
+Works with **Claude.ai**, **Claude Desktop**, **Claude Code**, **Cursor**, **Codex CLI**, **Windsurf**, **VS Code** and any other [Model Context Protocol](https://modelcontextprotocol.io) client. Listed in the official MCP Registry as `io.github.Ivanolegvak/sonar-mcp`.
 
 ## Pricing
 
@@ -38,21 +38,32 @@ The API is pay per call:
 
 **Your first API call is free** (a findings or report call; lookups have their own 100 free). After that, calls are paid from a prepaid balance: top up from €5 at [getsonar.report/developer/keys](https://getsonar.report/developer/keys?from=mcp&utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4). Plans and the web app's free tier are on [getsonar.report/pricing](https://getsonar.report/pricing?utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4).
 
-## Get an API key
+## Installation
+
+There are two ways to connect. Use the hosted server where your client supports it.
+
+- **Hosted server (recommended)**: `https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp` (Streamable HTTP). Nothing to install and no API key in any file. The first time your client connects it opens a browser window: select **Continue** on the consent page, sign in to your SONAR account (or sign up) and confirm with **Connect**. SONAR then creates an API key for that connection (named "MCP connector: <app>", listed and revocable under [Developer → API keys](https://getsonar.report/developer/keys)) and the client keeps only an OAuth token. Same seven tools, same prices.
+- **Local server**: `uvx getsonar-mcp` runs on your computer over stdio with your API key in `SONAR_API_KEY`. Use it for clients without remote sign-in, or to keep the key under your own control.
+
+For the local server, get an API key:
 
 1. Sign up at [getsonar.report](https://getsonar.report/?utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4)
 2. Open [Developer → API keys](https://getsonar.report/developer/keys?from=mcp&utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4)
 3. Click **Create API Key** and copy the `sk-sonar-...` key
 
-## Installation
+The local server needs [`uv`](https://docs.astral.sh/uv/getting-started/installation/) (it provides `uvx`); `uvx getsonar-mcp` fetches and runs the latest release. With pipx instead: `pipx install getsonar-mcp`, then use `getsonar-mcp` as the command.
 
-You need [`uv`](https://docs.astral.sh/uv/getting-started/installation/) (it provides `uvx`). Nothing else to install: `uvx getsonar-mcp` fetches and runs the latest release. With pipx instead: `pipx install getsonar-mcp`, then use `getsonar-mcp` as the command.
+### Claude Desktop and Claude.ai
 
-The key goes in the `SONAR_API_KEY` environment variable of the server process.
+Hosted: in Claude (web or Desktop) open **Customize > Connectors**, click **+ Add**, then **Add custom connector**. Name it `SONAR`, paste the URL below, click **Continue** through the authentication settings, then **Add**, and sign in when asked.
 
-### Claude Desktop
+```text
+https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp
+```
 
-One-click: download `sonar-kyb.mcpb` from the latest [GitHub release](https://github.com/Ivanolegvak/getsonar-mcp/releases), double-click it (or drag it into Claude Desktop, or **Settings > Extensions > Advanced settings > Install Extension...**) and paste your API key when asked. Claude Desktop stores the key in the system keychain and sets up Python with uv itself.
+On Team and Enterprise plans an owner adds it first under **Organization settings > Connectors**; members then click **Connect**. The Free plan allows one custom connector.
+
+Local alternative: download `sonar-kyb.mcpb` from the latest [GitHub release](https://github.com/Ivanolegvak/getsonar-mcp/releases), double-click it (or drag it into Claude Desktop, or **Settings > Extensions > Advanced settings > Install Extension...**) and paste your API key when asked. Claude Desktop stores the key in the system keychain and sets up Python with uv itself.
 
 Or by hand: edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
@@ -74,25 +85,43 @@ Restart Claude Desktop. The seven SONAR tools appear in the tools menu. If they 
 
 ### Claude Code
 
-```bash
-claude mcp add sonar --env SONAR_API_KEY=sk-sonar-YOUR_KEY_HERE -- uvx getsonar-mcp
-```
-
-Add `--scope user` to make it available in every project. Check it with `claude mcp list`.
-
-### Claude plugin
-
-The `getsonar-kyb` Claude plugin (the `claude-plugin/` folder of this repository: `.claude-plugin/plugin.json` and `.mcp.json`) runs nothing on your computer and needs no API key or `uv`. It connects Claude to SONAR's hosted MCP server at `https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp` (Streamable HTTP), which offers the same seven tools at the same prices. The first time Claude uses it, your client opens a browser window: select **Continue** on the consent page, sign in to your SONAR account and confirm with **Connect**. SONAR then creates an API key for that connection (named "MCP connector: <app>", listed and revocable under [Developer → API keys](https://getsonar.report/developer/keys)) and the client keeps only an OAuth token. In claude.ai and Cowork, connect it from the plugin's **Connectors** tab; Claude Code connects directly (check with `/mcp`).
-
-To add the same server without the plugin, in Claude Code:
+Hosted:
 
 ```bash
 claude mcp add --transport http sonar https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp
 ```
 
+Then run `/mcp` in Claude Code, select `sonar` and sign in. Add `--scope user` to make it available in every project.
+
+Local alternative:
+
+```bash
+claude mcp add sonar --env SONAR_API_KEY=sk-sonar-YOUR_KEY_HERE -- uvx getsonar-mcp
+```
+
+Check either with `claude mcp list`.
+
+### Claude plugin
+
+The `getsonar-kyb` Claude plugin (the `claude-plugin/` folder of this repository: `.claude-plugin/plugin.json` and `.mcp.json`) packages the hosted server above: it runs nothing on your computer and needs no API key or `uv`. In claude.ai and Cowork, connect it from the plugin's **Connectors** tab; Claude Code connects directly (check with `/mcp`).
+
 ### Cursor
 
-Edit `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one project):
+Hosted: edit `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one project):
+
+```json
+{
+  "mcpServers": {
+    "sonar": {
+      "url": "https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp"
+    }
+  }
+}
+```
+
+Cursor opens the sign-in page when it first connects. If sign-in reports an invalid redirect URL, update Cursor or use the local server.
+
+Local alternative, same file:
 
 ```json
 {
@@ -106,11 +135,26 @@ Edit `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one project):
     }
   }
 }
+```
+
+### Codex CLI
+
+Hosted:
+
+```bash
+codex mcp add sonar --url https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp
+```
+
+Codex opens the sign-in page itself; to sign in again later, run `codex mcp login sonar`. The command writes this to `~/.codex/config.toml`, which you can also edit by hand:
+
+```toml
+[mcp_servers.sonar]
+url = "https://sonar-mcp.sonar-mcp-remote.workers.dev/mcp"
 ```
 
 ### Windsurf
 
-Edit `~/.codeium/windsurf/mcp_config.json` (or Windsurf Settings → Cascade → MCP servers → View raw config):
+Local server (Windsurf's sign-in for remote servers is not confirmed with SONAR yet): edit `~/.codeium/windsurf/mcp_config.json` (or Windsurf Settings → Cascade → MCP servers → View raw config):
 
 ```json
 {
@@ -126,9 +170,38 @@ Edit `~/.codeium/windsurf/mcp_config.json` (or Windsurf Settings → Cascade →
 }
 ```
 
-Other clients (Continue.dev, Zed, Cline, ...) take the same command, args and env; see your client's MCP docs for where the config lives.
+### VS Code
 
-## Configuration
+Local server (the hosted server does not accept VS Code's sign-in addresses yet): create `.vscode/mcp.json` in your project. VS Code asks for the key when the server first starts, so it stays out of the file:
+
+```json
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "sonar-api-key",
+      "description": "SONAR API key (sk-sonar-...)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "sonar": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["getsonar-mcp"],
+      "env": {
+        "SONAR_API_KEY": "${input:sonar-api-key}"
+      }
+    }
+  }
+}
+```
+
+### Other clients
+
+Gemini CLI, Zed, Continue.dev, Cline and other clients run the local server with the same command, args and env; see your client's MCP docs for where the config lives.
+
+## Configuration (local server)
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -350,7 +423,9 @@ Agents: `kyb-diligence` (registries, sanctions, PEP, UBOs, adverse media) and `a
 
 ## Troubleshooting
 
-**Tools don't appear**: check the config file is valid JSON, restart the client, and run `uvx --version` in a terminal to confirm `uv` is installed.
+**Tools don't appear** (local server): check the config file is valid JSON, restart the client, and run `uvx --version` in a terminal to confirm `uv` is installed.
+
+**Hosted server asks you to sign in again**: the connection's "MCP connector" key was deleted under Developer → API keys, or the client dropped its token. Sign in again from the client (Claude Code: `/mcp`; Codex: `codex mcp login sonar`).
 
 **`401 Unauthorized`**: `SONAR_API_KEY` is missing or wrong. Check it at [getsonar.report/developer/keys](https://getsonar.report/developer/keys?from=mcp&utm_source=mcp-readme&utm_medium=directory&utm_campaign=mcp-2026q4).
 
@@ -382,7 +457,7 @@ Maintainers: [ARCHITECTURE.md](./ARCHITECTURE.md) covers the module layout and t
 The full policy is at [getsonar.report/privacy](https://getsonar.report/privacy). For this server in short:
 
 - **What it collects and sends**: the arguments of each tool call (company name, country, registration number, website, VAT number, run IDs) and your `SONAR_API_KEY`, sent over HTTPS to the SONAR API at `api.getsonar.report` (or the `SONAR_API_BASE` you set). Nothing goes to any other destination, and there is no telemetry.
-- **Hosted server (Claude plugin)**: the plugin sends the same tool arguments to the hosted server at `sonar-mcp.sonar-mcp-remote.workers.dev` (a Cloudflare Worker run by SONAR), which forwards them to `api.getsonar.report` with the API key created when you connected. The Worker keeps only OAuth records (client registrations, grants and hashed tokens; the connection's key is stored encrypted inside the grant) and no report data. Revoking the "MCP connector" key under Developer → API keys disconnects it.
+- **Hosted server (connectors and the Claude plugin)**: your client sends the same tool arguments to the hosted server at `sonar-mcp.sonar-mcp-remote.workers.dev` (a Cloudflare Worker run by SONAR), which forwards them to `api.getsonar.report` with the API key created when you connected. The Worker keeps only OAuth records (client registrations, grants and hashed tokens; the connection's key is stored encrypted inside the grant) and no report data. Revoking the "MCP connector" key under Developer → API keys disconnects it.
 - **Use and storage**: the API uses them to answer the call, bill it to your balance and keep your report history; the server itself writes nothing to disk and logs only to stderr. Claude Desktop keeps the API key in the system keychain (one-click .mcpb install; with a manual claude_desktop_config.json the key is stored in that file).
 - **Third parties**: to answer a call SONAR queries public sources (company registers, sanctions and PEP lists, ICIJ Offshore Leaks, news search) about the company you asked about, and shares personal data only with the providers on its [Subprocessors](https://getsonar.report/legal/subprocessors) page. SONAR does not sell personal data.
 - **Retention**: Retention follows the [privacy policy](https://getsonar.report/privacy). Deleting your SONAR account deletes your reports, keys and usage records at once; the policy lists the exceptions (tax records, backups).

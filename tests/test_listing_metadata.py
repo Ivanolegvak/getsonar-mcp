@@ -39,9 +39,29 @@ def test_readme_documents_every_tool() -> None:
 
 
 def test_readme_has_install_for_each_client() -> None:
-    for client in ("Claude Desktop", "Claude Code", "Cursor", "Windsurf"):
+    for client in (
+        "Claude Desktop",
+        "Claude Code",
+        "Cursor",
+        "Codex CLI",
+        "Windsurf",
+        "VS Code",
+    ):
         assert f"### {client}" in README, client
     assert "SONAR_API_KEY" in README
+
+
+def test_readme_puts_the_hosted_server_first() -> None:
+    # Hosted (OAuth, no key in files) comes before the local uvx setup, and
+    # each hosted snippet uses the client's documented remote-HTTP shape.
+    install = README[README.index("## Installation") : README.index("## Configuration")]
+    assert install.index(REMOTE_MCP_URL) < install.index("uvx getsonar-mcp")
+    assert f"claude mcp add --transport http sonar {REMOTE_MCP_URL}" in install
+    assert f'"url": "{REMOTE_MCP_URL}"' in install  # Cursor
+    assert f"codex mcp add sonar --url {REMOTE_MCP_URL}" in install
+    assert f'url = "{REMOTE_MCP_URL}"' in install  # Codex config.toml
+    assert "Add custom connector" in install
+    assert "—" not in README
 
 
 def test_pricing_and_scope_copy() -> None:
